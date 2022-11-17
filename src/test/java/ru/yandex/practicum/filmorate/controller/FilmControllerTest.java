@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.Duration;
 import java.time.LocalDate;
 
 public class FilmControllerTest {
@@ -18,32 +17,29 @@ public class FilmControllerTest {
 
     @BeforeEach
     public void value(){
-        Film film = new Film("Фильм","Описание", LocalDate.of(1990,7,21), 60);
+        Film film = new Film("Фильм","Описание", LocalDate.of(1990,1,1), 100);
         filmController.createFilm(film);
     }
 
     @Test
-    @DisplayName("Проверка сохраненного Film")
     public void equalityFilm(){
         for (Film film : filmController.getAllFilms()){
             assertEquals(film.getId(),1);
             assertEquals(film.getName(),"Фильм");
             assertEquals(film.getDescription(),"Описание");
-            assertEquals(film.getReleaseDate(), LocalDate.of(1990,7,21));
-            assertEquals(film.getDuration(), Duration.ofMinutes(60));
+            assertEquals(film.getReleaseDate(), LocalDate.of(1990,1,1));
+            assertEquals(film.getDuration(), 100);
         }
     }
 
     @Test
-    @DisplayName("Сохранение Film")
     public void createFilm() {
         assertEquals(filmController.getAllFilms().size(), 1);
     }
 
     @Test
-    @DisplayName("Обновление Film")
     public void updateFilm(){
-        Film film = new Film("Фильм1","Описание1", LocalDate.of(1990,7,21),60);
+        Film film = new Film("Фильм","Описание", LocalDate.of(1990,1,1), 100);
         film.setId(1);
         filmController.updateFilm(film);
 
@@ -55,12 +51,12 @@ public class FilmControllerTest {
     @Test
     @DisplayName("Не валидные значения")
     public void notValidateFilm(){
-        Film noName = new Film("","Описание1", LocalDate.of(1990,7,21),Duration.ofMinutes(60));
-        Film noDate = new Film("Фильм","Описание1", LocalDate.of(1830,7,21),Duration.ofMinutes(60));
+        Film noName = new Film("1","Описание1", LocalDate.of(1990,1,1),100);
+        Film noDate = new Film("2","Описание2", LocalDate.of(1800,1,1),100);
         Film descriptionMax200 = new Film("Фильм","Хакер‑подросток Дейв Лайтмен взламывает \n"+
                 " компьютерную сеть и находит среди файлов несколько любопытных военных симуляторов. \n" +
                 "Фильм стал вторым в карьере молодого Мэттью Бродерика и открыл ему дорогу в большое кино. \n"
-                , LocalDate.of(2000,7,21),Duration.ofMinutes(60));
+                , LocalDate.of(2000,7,21),1);
 
         try {
             filmController.createFilm(noName);
