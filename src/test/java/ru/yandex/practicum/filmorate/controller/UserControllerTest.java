@@ -50,7 +50,6 @@ public class UserControllerTest {
 
         for (User test :userController.getAllUsers()){
             assertEquals(test,user);
-//            assertEquals(test.getName(),"AD");
         }
     }
 
