@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.validators.FilmValidator;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -15,7 +16,6 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Integer, Film> films = new HashMap<>();
     private int filmId = 0;
-    private final LocalDate upperLimit = LocalDate.parse("1895-12-28");
 
     private int generateFilmId() {
         return ++filmId;
@@ -37,7 +37,7 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film createFilm(Film film) {
-        if (film.getReleaseDate().isAfter(upperLimit)) {
+        if (FilmValidator.valid(film)) {
             film.setId(generateFilmId());
             films.put(film.getId(), film);
             log.info("Film" + film.getId() + " created");

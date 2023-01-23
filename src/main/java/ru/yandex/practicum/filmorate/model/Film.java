@@ -30,18 +30,6 @@ public class Film {
         this.duration = duration;
     }
 
-    public Set<Integer> getLikes() {
-        return likes;
-    }
-
-    public void setLikes(Set<Integer> likes) {
-        this.likes = likes;
-    }
-
-    public Integer popularity(){
-        return likes.size();
-    }
-
     public void addLIke(Integer userId){
         likes.add(userId);
     }

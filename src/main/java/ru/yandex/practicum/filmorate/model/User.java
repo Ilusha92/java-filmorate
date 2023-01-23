@@ -5,7 +5,6 @@ import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -34,22 +33,6 @@ public class User {
 
     public void addFriendId(int userId){
         friendIds.add(userId);
-    }
-
-    public Set<Integer> getFriendIds() {
-        return friendIds;
-    }
-
-    public void setFriendIds(Set<Integer> friendIds) {
-        this.friendIds = friendIds;
-    }
-
-    public void removeFriend(Integer userId){
-        if(friendIds.contains(userId)){
-            friendIds.remove(userId);
-        }else{
-            throw new NotFoundObjectException("Пользователя "+userId+" нет в друзьях у пользователя "+this.id+"!");
-        }
     }
 
 }

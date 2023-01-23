@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
@@ -20,9 +19,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserServiceManager implements UserService{
 
-    private final FilmStorage filmStorage;
     private final UserStorage userStorage;
-
 
     @Override
     public Collection<User> getAll() {
@@ -32,11 +29,9 @@ public class UserServiceManager implements UserService{
     @Override
     public User getById(int id) {
         User user = userStorage.getUserById(id);
-
         if (user == null) {
             throw new NotFoundObjectException("Can't find this user");
         }
-
         return user;
     }
 
@@ -69,14 +64,11 @@ public class UserServiceManager implements UserService{
         if (userId == friendId) {
             throw new ValidationException("friendId can not be equal to userId");
         }
-
         User user = userStorage.getUserById(userId);
         User friend = userStorage.getUserById(friendId);
-
         if (user == null) {
             throw new NotFoundObjectException("user");
         }
-
         if (friend == null) {
             throw new NotFoundObjectException("user");
         }
@@ -93,11 +85,9 @@ public class UserServiceManager implements UserService{
     @Override
     public List<User> getFriends(int id) {
         User user = userStorage.getUserById(id);
-
         if (user == null) {
             throw new NotFoundObjectException("user");
         }
-
         return user
                 .getFriendIds()
                 .stream()
@@ -109,15 +99,12 @@ public class UserServiceManager implements UserService{
     public List<User> getCommonFriends(int userId, int otherId) {
         User user = userStorage.getUserById(userId);
         User otherUser = userStorage.getUserById(otherId);
-
         if (user == null) {
             throw new NotFoundObjectException("user");
         }
-
         if (otherUser == null) {
             throw new NotFoundObjectException("otherUser");
         }
-
         return user
                 .getFriendIds()
                 .stream()

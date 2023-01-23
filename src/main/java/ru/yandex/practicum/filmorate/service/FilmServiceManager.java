@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -54,15 +53,11 @@ public class FilmServiceManager implements FilmService {
         if (film == null) {
             throw new NotFoundObjectException("Нет такого фильма");
         }
-
         if (user == null) {
             throw new NotFoundObjectException("Нет такого юзера");
         }
-
        film.addLIke(userId);
-
-
-        return filmStorage.updateFilm(film);
+       return filmStorage.updateFilm(film);
     }
 
     @Override
@@ -73,16 +68,13 @@ public class FilmServiceManager implements FilmService {
         if (film == null) {
             throw new NotFoundObjectException("Нет такого фильма");
         }
-
         if (user == null) {
             throw new NotFoundObjectException("Нет такого юзера");
         }
         if (!film.getLikes().contains(userId)) {
             throw new NotFoundObjectException("Нет лайка от такого юзера");
         }
-
         film.removeLike(userId);
-
         return filmStorage.updateFilm(film);
     }
 

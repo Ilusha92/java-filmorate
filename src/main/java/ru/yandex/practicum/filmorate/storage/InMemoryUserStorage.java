@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.validators.UserValidator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,9 +33,7 @@ public class InMemoryUserStorage implements UserStorage{
 
     @Override
     public User createUser(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
+        UserValidator.checkName(user);
         user.setId(generateUserId());
         users.put(user.getId(), user);
         return user;
