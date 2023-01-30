@@ -1,10 +1,12 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.Data;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 
 import javax.validation.constraints.*;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Data
 public class Film {
@@ -19,12 +21,26 @@ public class Film {
     private LocalDate releaseDate;
     @Positive(message = "Duration is required and must be greater than 0")
     private int duration;
+    private Set<Integer> likes = new LinkedHashSet<>();
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
         this.duration = duration;
+    }
+
+    public void addLIke(Integer userId){
+        likes.add(userId);
+    }
+
+    public void removeLike(Integer userId){
+        if (likes.contains(userId)){
+            likes.remove(userId);
+        }else{
+            throw new NotFoundObjectException("Лайк от пользователя "+userId+" этому фильму и так не был поставлен, " +
+                    "удалять нечего");
+        }
     }
 
 }
