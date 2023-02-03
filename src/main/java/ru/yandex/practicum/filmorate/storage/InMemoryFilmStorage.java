@@ -5,12 +5,14 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.validators.FilmValidator;
 
 import java.time.LocalDate;
 import java.util.*;
 
-@Component
+
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
 
@@ -61,6 +63,41 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public void deleteFilmById(int filmId) {
         films.remove(filmId);
+    }
+
+    @Override
+    public Film likeFilm(int filmId, int userId) {
+        return null;
+    }
+
+    @Override
+    public Film deleteLikeFromFilm(int filmId, int userId) {
+        return null;
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        return null;
+    }
+
+    @Override
+    public List<Genre> getAllGenres() {
+        return null;
+    }
+
+    @Override
+    public Genre getGenreById(int id) {
+        return null;
+    }
+
+    @Override
+    public List<Mpa> getAllMpa() {
+        return null;
+    }
+
+    @Override
+    public Mpa getMpaById(int id) {
+        return null;
     }
 
 }

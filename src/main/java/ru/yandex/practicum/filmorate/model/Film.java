@@ -5,6 +5,7 @@ import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ public class Film {
     @Positive(message = "Duration is required and must be greater than 0")
     private int duration;
     private Set<Integer> likes = new LinkedHashSet<>();
+    private Set<Genre> genres = new LinkedHashSet<>();
+    private Mpa mpa;
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
@@ -41,6 +44,10 @@ public class Film {
             throw new NotFoundObjectException("Лайк от пользователя "+userId+" этому фильму и так не был поставлен, " +
                     "удалять нечего");
         }
+    }
+
+    public void addGenre(Genre genre){
+        genres.add(genre);
     }
 
 }

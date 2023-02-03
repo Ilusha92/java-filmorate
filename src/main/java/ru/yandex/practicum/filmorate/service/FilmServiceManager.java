@@ -2,9 +2,13 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -13,15 +17,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class FilmServiceManager implements FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
+    @Autowired
+    public FilmServiceManager(@Qualifier("filmDBStorage") FilmStorage filmStorage, UserStorage userStorage) {
+        this.filmStorage = filmStorage;
+        this.userStorage = userStorage;
+    }
+
     @Override
-    public Collection<Film> getAllFilms() {
+    public List<Film> getAllFilms() {
         return filmStorage.getAllFilms();
     }
 
@@ -47,45 +55,37 @@ public class FilmServiceManager implements FilmService {
 
     @Override
     public Film likeFilm(int filmId, int userId) {
-        Film film = filmStorage.getFilmById(filmId);
-        User user = userStorage.getUserById(userId);
-
-        if (film == null) {
-            throw new NotFoundObjectException("Нет такого фильма");
-        }
-        if (user == null) {
-            throw new NotFoundObjectException("Нет такого юзера");
-        }
-       film.addLIke(userId);
-       return filmStorage.updateFilm(film);
+       return filmStorage.likeFilm(filmId, userId);
     }
 
     @Override
     public Film deleteLikeFromFilm(int filmId, int userId) {
-        Film film = filmStorage.getFilmById(filmId);
-        User user = userStorage.getUserById(userId);
-
-        if (film == null) {
-            throw new NotFoundObjectException("Нет такого фильма");
-        }
-        if (user == null) {
-            throw new NotFoundObjectException("Нет такого юзера");
-        }
-        if (!film.getLikes().contains(userId)) {
-            throw new NotFoundObjectException("Нет лайка от такого юзера");
-        }
-        film.removeLike(userId);
-        return filmStorage.updateFilm(film);
+        return filmStorage.deleteLikeFromFilm(filmId, userId);
     }
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        Collection<Film> films = filmStorage.getAllFilms();
-        return films
-                .stream()
-                .sorted((f1, f2) -> Integer.compare(f2.getLikes().size(), f1.getLikes().size()))
-                .limit(count)
-                .collect(Collectors.toList());
+        return filmStorage.getPopularFilms(count);
+    }
+
+    @Override
+    public List<Genre> getAllGenres() {
+        return filmStorage.getAllGenres();
+    }
+
+    @Override
+    public Genre getGenreById(int id) {
+        return filmStorage.getGenreById(id);
+    }
+
+    @Override
+    public List<Mpa> getAllMpa() {
+        return filmStorage.getAllMpa();
+    }
+
+    @Override
+    public Mpa getMpaById(int id) {
+        return filmStorage.getMpaById(id);
     }
 
 }
