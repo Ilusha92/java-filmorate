@@ -169,29 +169,6 @@ public class FilmDbStorage implements FilmStorage {
         return mpas;
     }
 
-//    @Override
-//    public Mpa getMpaById(int id) {
-//        String sql = "SELECT mpaId FROM mpa";
-//        SqlRowSet getMpaFromDb = jdbcTemplate.queryForRowSet(sql);
-//        List<Integer> ids = new ArrayList<>();
-//        while (getMpaFromDb.next()){
-//            ids.add(getMpaFromDb.getInt("mpaId"));
-//        }
-//        if(ids.contains(id)){
-//            SqlRowSet mpaRows = jdbcTemplate.queryForRowSet("SELECT * FROM mpa WHERE mpaId = ?", id);
-//            if(mpaRows.next()){
-//                Mpa mpa = new Mpa(mpaRows.getInt("mpaId"), mpaRows.getString("name"));
-//                log.info("Рейтинг с id={}, это {}.", mpa.getId(), mpa.getName());
-//                return mpa;
-//            }else{
-//                log.info("Рейтинга с таким id нет!");
-//                return null;
-//            }
-//        } else {
-//            throw new MpaNotFoundException("Рейтинга с таким id нет в базе!");
-//        }
-//    }
-
     public Mpa getMpaById(int id){
         checkMpaInDb(id);
         SqlRowSet mpaRows = jdbcTemplate.queryForRowSet("SELECT * FROM mpa WHERE mpaId = ?", id);

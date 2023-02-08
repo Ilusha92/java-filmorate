@@ -19,8 +19,6 @@ public class FilmMapper implements ResultSetExtractor<List<Film>> {
     private final JdbcTemplate jdbcTemplate;
     private final FilmStorage filmStorage;
 
-    //мы хотим одновременно извлекать данные из нескольких таблиц. ResultSetExtractor работает в контексте всей выборки целиком, позволяя группировать данные
-    //https://devmark.ru/article/result-set-extractor
     public FilmMapper(JdbcTemplate jdbcTemplate, @Qualifier("filmDBStorage") FilmStorage filmStorage) {
         this.jdbcTemplate = jdbcTemplate;
         this.filmStorage = filmStorage;
