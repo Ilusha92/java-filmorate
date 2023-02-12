@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-@Component
 @Slf4j
 public class InMemoryUserStorage implements UserStorage{
 
@@ -55,6 +54,26 @@ public class InMemoryUserStorage implements UserStorage{
         User user = users.get(userId);
         users.remove(userId);
         return user;
+    }
+
+    @Override
+    public void addFriend(int userId, int friendId) {
+
+    }
+
+    @Override
+    public User deleteFriend(int userId, int friendId) {
+        return null;
+    }
+
+    @Override
+    public List<User> getFriends(int id) {
+        return null;
+    }
+
+    @Override
+    public List<User> getCommonFriends(int userId, int otherId) {
+        return null;
     }
 
 }

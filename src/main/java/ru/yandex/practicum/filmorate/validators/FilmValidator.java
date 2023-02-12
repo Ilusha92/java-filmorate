@@ -10,7 +10,7 @@ public class FilmValidator {
     private static boolean checkYear(Film film) {
         LocalDate checkDate = LocalDate.of(1895, 12, 28);
         if (film.getReleaseDate() != null
-                && film.getReleaseDate().isAfter(checkDate))
+                && film.getReleaseDate().isBefore(checkDate))
             return true;
         throw new ValidationException("Invalid film's release date");
     }
