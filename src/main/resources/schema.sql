@@ -45,3 +45,16 @@ CREATE TABLE IF NOT EXISTS friendshipStatus (
     friendshipStatusId int,
     description varchar
 );
+
+CREATE TABLE IF NOT EXISTS directors (
+     directorId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+     directorName varchar
+     );
+
+     CREATE TABLE IF NOT EXISTS directorFilm (
+     directorFilmId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+     filmId int,
+     directorId int,
+     CONSTRAINT filmDirectorFilm FOREIGN KEY (filmId) REFERENCES films (filmId),
+     CONSTRAINT directorFilmDirector FOREIGN KEY (directorId) REFERENCES directors (directorId)
+     );
