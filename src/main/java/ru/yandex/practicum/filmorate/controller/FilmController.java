@@ -8,7 +8,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -17,6 +18,11 @@ import java.util.*;
 public class FilmController {
 
     private final FilmService filmService;
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam("userId") int userId, @RequestParam("friendId") int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
 
     @GetMapping
     public Collection<Film> getAllFilms() {
