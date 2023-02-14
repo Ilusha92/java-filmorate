@@ -1,16 +1,15 @@
-package ru.yandex.practicum.filmorate.storage;
+package ru.yandex.practicum.filmorate.service;
 
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.List;
 
-public interface DirectorStorage {
-    List<Director> findAll ();
+public interface DirectorService {
     Director create (Director director);
     Director update (Director director);
-    Director findById (Integer id);
+    Director getById (Integer id);
     Director delete (Integer id);
-    List<Film> findFilmsByDirectorId (Integer directorId);
-
+    List<Director> getAll ();
+    List<Film> getFilmsSortedByLikesOrYear (Integer id, boolean[] params);
 }

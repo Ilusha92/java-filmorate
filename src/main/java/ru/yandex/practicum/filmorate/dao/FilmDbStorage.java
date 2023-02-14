@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.exceptions.GenreNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -39,14 +40,22 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getAllFilms() {
-        return jdbcTemplate.query("SELECT * FROM films", new FilmMapper(jdbcTemplate, this));
+        List<Film> films = jdbcTemplate.query("SELECT * FROM films", new FilmMapper(jdbcTemplate, this));
+        if (films != null) {
+            films.forEach(film -> film.setDirector(getDirectorByFilmId(film.getId())));
+        }
+        return films;
     }
 
     @Override
     public Film getFilmById(int id) {
         String sql = "SELECT * FROM films WHERE filmId="+id;
         if (checkFilmInDb(id)){
-            return jdbcTemplate.query(sql, this::makeFilm);
+            Film film = jdbcTemplate.query(sql, this::makeFilm);
+            if (film != null) {
+                film.setDirector(getDirectorByFilmId(id));
+            }
+            return film;
         }else{
             return null;
         }
@@ -57,7 +66,7 @@ public class FilmDbStorage implements FilmStorage {
         if (film.getReleaseDate().isBefore(FILMSTARTDATE)) {
             log.info("Не пройдена валидация даты выпуска фильма. Так рано фильмы не снимали!");
             throw new ValidationException("Так рано фильмы не снимали!");
-        }else{
+        }else {
             film.setId(generateFilmId());
             jdbcTemplate.update("INSERT INTO films(filmId, name, description, release_date, duration, mpaId) " +
                             "VALUES(?,?,?,?,?,?)",
@@ -67,21 +76,24 @@ public class FilmDbStorage implements FilmStorage {
                     film.getReleaseDate(),
                     film.getDuration(),
                     film.getMpa().getId());
-            if(film.getGenres().size()>0){
-                for (Genre genre : film.getGenres()){
+            if (film.getGenres().size() > 0) {
+                for (Genre genre : film.getGenres()) {
                     jdbcTemplate.update("INSERT INTO film_genre(filmId, genreId) VALUES(?,?)",
                             film.getId(),
                             genre.getId());
                 }
             }
-
+            if (film.getDirector() != null) {
+                jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
+                jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), film.getDirector().getId());
+            }
         }
         return film;
     }
 
     @Override
     public Film updateFilm(Film film) {
-        if(checkFilmInDb(film.getId())){
+        if(checkFilmInDb(film.getId())) {
             jdbcTemplate.update("UPDATE films SET name=?, description=?, release_date=?, duration=?, " +
                             "mpaId=? WHERE filmId=?",
                     film.getName(),
@@ -92,12 +104,16 @@ public class FilmDbStorage implements FilmStorage {
                     film.getId());
             jdbcTemplate.update("DELETE FROM likesList WHERE filmId=?", film.getId());
             jdbcTemplate.update("DELETE FROM film_genre WHERE filmId=?", film.getId());
-            for(Integer userId : film.getLikes()){
+            for (Integer userId : film.getLikes()) {
                 jdbcTemplate.update("INSERT INTO likesList VALUES(?,?)", film.getId(), userId);
             }
-            for (Genre genre : film.getGenres()){
+            for (Genre genre : film.getGenres()) {
                 jdbcTemplate.update("INSERT INTO film_genre(filmId, genreId) " +
                         "VALUES(?,?)", film.getId(), genre.getId());
+            }
+            if (film.getDirector() != null) {
+                jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
+                jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), film.getDirector().getId());
             }
         }
         return film;
@@ -129,7 +145,11 @@ public class FilmDbStorage implements FilmStorage {
     public List<Film> getPopularFilms(int count) {
         String sql = "SELECT f.*, count(fl.userId) AS likes FROM films AS f LEFT JOIN likesList AS fl " +
                 "ON f.filmId=fl.filmId GROUP BY f.filmId ORDER BY likes DESC LIMIT "+count;
-        return jdbcTemplate.query(sql, new FilmMapper(jdbcTemplate, this));
+        List<Film> films = jdbcTemplate.query(sql, new FilmMapper(jdbcTemplate, this));
+        if (films != null) {
+            films.forEach(film -> film.setDirector(getDirectorByFilmId(film.getId())));
+        }
+        return films;
     }
 
     @Override
@@ -262,6 +282,13 @@ public class FilmDbStorage implements FilmStorage {
             throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
         }
 
+
+    }
+    private Director getDirectorByFilmId (Integer filmId) {
+        String statement = "SELECT films.filmId, directors.directorId, directors.directorName " +
+                "FROM films LEFT JOIN directors " +
+                "ON films.filmId = directors.directorId WHERE films.filmId = ?";
+        return jdbcTemplate.queryForObject(statement, new DirectorMapper(), filmId);
     }
 
 }
