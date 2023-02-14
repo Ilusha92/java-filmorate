@@ -43,15 +43,15 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
-        String sql2 = "SELECT FILMID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID " +
-                "FROM (SELECT * FROM FILMS as f JOIN " +
-                "(SELECT A.FILMID as common, A.USERID as AU, B.USERID as BU " +
+        String sql2 = "SELECT DISTINCT(FILMID), NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID " +
+                "FROM FILMS as f JOIN " +
+                "(SELECT A.FILMID as FI, A.USERID as AU, B.USERID as BU " +
                 "FROM LIKESLIST A, LIKESLIST B " +
-                "WHERE A.FILMID = B.FILMID AND A.USERID <> B.USERID) " +
-                "ON f.FILMID = common) as c " +
-                "WHERE (AU = %d AND BU = %d)";
+                "WHERE A.FILMID = B.FILMID AND A.USERID <> B.USERID) as common " +
+                "ON f.FILMID = common.FI " +
+                "WHERE (AU = " + userId + " AND BU = " + friendId + ")";
 
-        return jdbcTemplate.query(String.format(sql2, userId, friendId), new FilmMapper(jdbcTemplate, this));
+        return jdbcTemplate.query(sql2, new FilmMapper(jdbcTemplate, this));
     }
 
     @Override
