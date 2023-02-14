@@ -51,6 +51,7 @@ public class FilmDbStorage implements FilmStorage {
 //                "JOIN (SELECT FILMID ffl FROM LIKESLIST as fl where USERID = "+ friendId + ") " +
 //                "ON ufl = ffl)) ON f.FILMID = LikedFilm";
 
+
         String sql2 = "SELECT FILMID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID " +
                 "FROM (SELECT * FROM FILMS as f JOIN " +
                 "(SELECT A.FILMID as common, A.USERID as AU, B.USERID as BU " +
