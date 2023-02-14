@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -25,7 +26,9 @@ public class FilmServiceManager implements FilmService {
 
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
-        return filmStorage.getCommonFilms(userId, friendId);
+        List<Film> resultList  = filmStorage.getCommonFilms(userId, friendId);
+        resultList.sort(Comparator.comparingInt(Film::getLikesCount).reversed());
+        return resultList;
     }
 
     @Override
