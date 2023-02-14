@@ -1,13 +1,12 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.ResultSet;
@@ -150,6 +149,13 @@ public class UserDbStorage implements UserStorage {
         }else{
             return null;
         }
+    }
+
+    @Override
+    public List<Film> getRecommendedFilms(int id) {
+        String sql = "SELECT * FROM films WHERE userId="+id;
+        S
+        return null;
     }
 
     private boolean checkUserInDb(Integer id){
