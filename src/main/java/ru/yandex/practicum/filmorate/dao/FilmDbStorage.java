@@ -111,8 +111,8 @@ public class FilmDbStorage implements FilmStorage {
                 jdbcTemplate.update("INSERT INTO film_genre(filmId, genreId) " +
                         "VALUES(?,?)", film.getId(), genre.getId());
             }
+            jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
             if (film.getDirector() != null) {
-                jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
                 jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), film.getDirector().getId());
             }
         }
@@ -122,7 +122,7 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void deleteFilmById(int filmId) {
         checkFilmInDb(filmId);
-
+        jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", filmId);
     }
 
     @Override

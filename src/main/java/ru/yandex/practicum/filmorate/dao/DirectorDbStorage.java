@@ -55,6 +55,9 @@ public class DirectorDbStorage implements DirectorStorage {
         if (director.getId() == null) {
             throw new NotFoundObjectException("Director id is null");
         }
+        if (! isExists(director.getId())) {
+            throw new NotFoundObjectException("Director with " + director.getId() + " not found");
+        }
         String statement = "UPDATE directors SET directorName = ? WHERE directorId = ?";
         jdbcTemplate.update(statement, director.getDirectorName(), director.getId());
         updateFilmsForDirector(director.getId(), director.getFilms());
@@ -63,6 +66,9 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public Director findById(Integer id) {
+        if (! isExists(id)) {
+            throw new NotFoundObjectException("Director with " + id + " not found");
+        }
         String statement = "SELECT * FROM directors WHERE directorID = ?";
         Director director = jdbcTemplate.queryForObject(statement, new DirectorMapper(), id);
         if (director == null) {
@@ -77,12 +83,21 @@ public class DirectorDbStorage implements DirectorStorage {
         Director director = findById(id);
         String statement = "DELETE FROM directors WHERE directorID = ?";
         jdbcTemplate.update(statement, id);
+        deleteDirectorFromDirectorFilm(id);
         return director;
     }
 
     public List<Film> findFilmsByDirectorId (Integer directorId) {
+       if (! isExists(directorId)) {
+           throw new NotFoundObjectException("Director with " + directorId + " not found");
+       }
         String statement = "SELECT directorId,films.* FROM directorFilm LEFT JOIN films ON directorFilm.filmId = films.filmId WHERE directorId = ?";
         return jdbcTemplate.query(statement, new FilmMapper(jdbcTemplate, filmDbStorage), directorId);
+    }
+
+    public void deleteDirectorFromDirectorFilm (Integer id) {
+        String statement = "DELETE FROM directorFilm WHERE directorId = ?";
+        jdbcTemplate.update(statement,id);
     }
 
     private void updateFilmsForDirector (Integer directorId, Set<Film> films) {
@@ -91,6 +106,16 @@ public class DirectorDbStorage implements DirectorStorage {
         statement = "INSERT INTO directorFilm (directorId, filmId) VALUES (?, ?)";
         for (Film film : films) {
             jdbcTemplate.update(statement, directorId, film.getId());
+        }
+    }
+
+    public boolean isExists(Integer id) {
+        String s   = "SELECT COUNT(*) FROM directors WHERE directorId=?";
+        Long   obj = jdbcTemplate.queryForObject(s, Long.class, id);
+        if (obj != null) {
+            return obj != 0;
+        } else {
+            return false;
         }
     }
 }
