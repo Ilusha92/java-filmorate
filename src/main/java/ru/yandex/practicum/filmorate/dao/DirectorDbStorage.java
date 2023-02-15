@@ -44,7 +44,9 @@ public class DirectorDbStorage implements DirectorStorage {
             return ps;
         }, keyHolder);
         if (keyHolder.getKey() != null) {
-            updateFilmsForDirector(keyHolder.getKey().intValue(), director.getFilms());
+           if (director.getFilms() != null) {
+               updateFilmsForDirector(keyHolder.getKey().intValue(), director.getFilms());
+           }
             return findById(keyHolder.getKey().intValue());
         }
         return null;
@@ -60,7 +62,9 @@ public class DirectorDbStorage implements DirectorStorage {
         }
         String statement = "UPDATE directors SET directorName = ? WHERE directorId = ?";
         jdbcTemplate.update(statement, director.getDirectorName(), director.getId());
-        updateFilmsForDirector(director.getId(), director.getFilms());
+        if (director.getFilms() != null) {
+            updateFilmsForDirector(director.getId(), director.getFilms());
+        }
         return findById(director.getId());
     }
 

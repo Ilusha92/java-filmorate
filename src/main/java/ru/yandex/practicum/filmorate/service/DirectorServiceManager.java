@@ -46,16 +46,14 @@ public class DirectorServiceManager implements DirectorService {
     }
 
     @Override
-    public List<Film> getFilmsSortedByLikesOrYear(Integer id, boolean [] params) {
+    public List<Film> getFilmsSortedByLikesOrYear(Integer id, String param) {
         List<Film> filmsByDirectorId = storage.findFilmsByDirectorId(id);
-        if (params[0] && params[1]) {
-           return filmsByDirectorId.stream().sorted(Comparator.comparing(Film::getReleaseDate).thenComparingInt(film->film.getLikes().size())).collect(Collectors.toList());
-        }
-        else if (params[0]) {
+
+        if ("year".equalsIgnoreCase(param)) {
             return filmsByDirectorId
                     .stream().sorted(Comparator.comparing(Film::getReleaseDate)).collect(Collectors.toList());
         }
-        else  if (params[1]) {
+        else  if ("likes".equalsIgnoreCase(param)) {
             return filmsByDirectorId.stream().sorted(Comparator.comparing(film -> film.getLikes().size())).collect(Collectors.toList());
         }
         return filmsByDirectorId;
