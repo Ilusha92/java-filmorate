@@ -75,7 +75,7 @@ public class UserServiceManager implements UserService{
     }
 
     @Override
-    public List<Film> recommendFilms(int id) {
+    public List<Film> getRecommendedFilms(int id) {
         return userStorage.getRecommendedFilms(id);
     }
 }
