@@ -18,5 +18,5 @@ public interface UserService {
     List<User> getFriends(int id);
     List<User> getCommonFriends(int userId, int otherId);
 
-    List<Film> recommendFilms(int id);
+    List<Film> getRecommendedFilms(int id);
 }

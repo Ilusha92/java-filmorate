@@ -153,9 +153,19 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<Film> getRecommendedFilms(int id) {
-        String sql = "SELECT * FROM films WHERE userId="+id;
-        S
-        return null;
+        String sql = "SELECT FILMID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID FROM FILMS as f JOIN " +
+                "(SELECT FILMID as recommended FROM LIKESLIST " +
+                "WHERE USERID  = (SELECT USERID FROM LIKESLIST " +
+                "    WHERE FILMID IN (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +") " +
+                "    AND USERID <> " + id +
+                "    GROUP BY USERID " +
+                "    ORDER BY count(USERID) DESC " +
+                "    LIMIT 1) " +
+                "AND FILMID NOT IN " +
+                "    (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +")) as Lr " +
+                "ON f.FILMID = recommended";
+
+        return jdbcTemplate.query(sql, new FilmMapper(jdbcTemplate, new FilmDbStorage(jdbcTemplate)));
     }
 
     private boolean checkUserInDb(Integer id){
