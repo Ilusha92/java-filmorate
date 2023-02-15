@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component("userDBStorage")
@@ -77,7 +78,18 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User deleteUserById(int userId) {
-        return null;
+        Optional<User> userOptional = Optional.of(getUserById(userId));
+        if(userOptional.isPresent()) {
+            jdbcTemplate.update("DELETE FROM friendship where userId = ?", userId);
+            jdbcTemplate.update("DELETE FROM friendship where friendId = ?", userId);
+            jdbcTemplate.update("DELETE FROM likesList where userId = ?", userId);
+            jdbcTemplate.update("DELETE FROM users where userId = ?", userId);
+            log.info("Пользователь с userId " + userId + " был удален.");
+            return userOptional.get();
+        } else {
+            log.info("Пользователь с userId " + userId + " не был удален.");
+            throw new NotFoundObjectException("Пользователь с userId " + userId + " не был удален.");
+        }
     }
 
     @Override

@@ -19,6 +19,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component("filmDBStorage")
@@ -105,8 +106,16 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void deleteFilmById(int filmId) {
-        checkFilmInDb(filmId);
-
+        Optional<Film> userOptional = Optional.of(getFilmById(filmId));
+        if(userOptional.isPresent()) {
+            jdbcTemplate.update("DELETE FROM film_genre where filmId = ?", filmId);
+            jdbcTemplate.update("DELETE FROM likesList where filmId = ?", filmId);
+            jdbcTemplate.update("DELETE FROM films where filmId = ?", filmId);
+            log.info("Фильм с filmId " + filmId + " был удален.");
+        } else {
+            log.info("Фильм с filmId " + filmId + " не был удален.");
+            throw new NotFoundObjectException("Фильм с filmId " + filmId + " не был удален.");
+        }
     }
 
     @Override
