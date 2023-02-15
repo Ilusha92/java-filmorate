@@ -5,6 +5,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
@@ -35,12 +36,15 @@ public class DirectorDbStorage implements DirectorStorage {
 
     @Override
     public Director create(Director director) {
+        if(director.getName() == null || director.getName().isBlank()) {
+            throw  new ValidationException("Name is required");
+        }
         String statement = "INSERT INTO directors (directorName) VALUES (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection
                     .prepareStatement(statement, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, director.getDirectorName());
+            ps.setString(1, director.getName());
             return ps;
         }, keyHolder);
         if (keyHolder.getKey() != null) {
@@ -60,8 +64,11 @@ public class DirectorDbStorage implements DirectorStorage {
         if (! isExists(director.getId())) {
             throw new NotFoundObjectException("Director with " + director.getId() + " not found");
         }
+        if(director.getName() == null || director.getName().isBlank()) {
+            throw  new ValidationException("Name is required");
+        }
         String statement = "UPDATE directors SET directorName = ? WHERE directorId = ?";
-        jdbcTemplate.update(statement, director.getDirectorName(), director.getId());
+        jdbcTemplate.update(statement, director.getName(), director.getId());
         if (director.getFilms() != null) {
             updateFilmsForDirector(director.getId(), director.getFilms());
         }
@@ -96,7 +103,11 @@ public class DirectorDbStorage implements DirectorStorage {
            throw new NotFoundObjectException("Director with " + directorId + " not found");
        }
         String statement = "SELECT directorId,films.* FROM directorFilm LEFT JOIN films ON directorFilm.filmId = films.filmId WHERE directorId = ?";
-        return jdbcTemplate.query(statement, new FilmMapper(jdbcTemplate, filmDbStorage), directorId);
+        List<Film> films = jdbcTemplate.query(statement, new FilmMapper(jdbcTemplate, filmDbStorage), directorId);
+        if (films != null) {
+            films.forEach(film -> film.setDirectors(new HashSet<>(findDirectorsByFilmId(film.getId()))));
+        }
+        return films;
     }
 
     public void deleteDirectorFromDirectorFilm (Integer id) {
@@ -121,5 +132,9 @@ public class DirectorDbStorage implements DirectorStorage {
         } else {
             return false;
         }
+    }
+    private List<Director> findDirectorsByFilmId (Integer filmId) {
+        String statement = "SELECT directorFilm.filmId, directors.directorId, directors.directorName FROM directorFilm LEFT JOIN directors ON directorFilm.directorId = directors.directorId WHERE directorFilm.filmId = ?";
+        return jdbcTemplate.query(statement, new DirectorMapper(), filmId);
     }
 }
