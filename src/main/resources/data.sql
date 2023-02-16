@@ -1,3 +1,5 @@
+DELETE FROM directorFilm;
+DELETE FROM directors;
 DELETE FROM films;
 DELETE FROM users;
 DELETE FROM film_genre;

@@ -90,7 +90,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDirectors().forEach(d-> jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), d.getId()));
             }
         }
-        return film;
+        return getFilmById(film.getId());
     }
 
     @Override
@@ -118,7 +118,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDirectors().forEach(d-> jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), d.getId()));
             }
         }
-        return film;
+        return getFilmById(film.getId());
     }
 
     @Override
@@ -287,9 +287,9 @@ public class FilmDbStorage implements FilmStorage {
 
     }
     private List<Director> getDirectorByFilmId (Integer filmId) {
-        String statement = "SELECT films.filmId, directors.directorId, directors.directorName " +
-                "FROM films LEFT JOIN directors " +
-                "ON films.filmId = directors.directorId WHERE films.filmId = ?";
+        String statement = "SELECT directorFilm.filmId, directors.directorId, directors.directorName " +
+                "FROM directorFilm LEFT JOIN directors " +
+                "ON directorFilm.directorId = directors.directorId WHERE directorFilm.filmId = ?";
         return jdbcTemplate.query(statement, new DirectorMapper(), filmId);
     }
 
