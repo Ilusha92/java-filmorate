@@ -7,7 +7,7 @@ import java.util.Map;
 public interface ReviewLikesStorage {
     void add(Review review);
     void update(Review review);
-    void delete(Review review);
+    void delete(long reviewId);
     Map<Long, Boolean> getReviewLikesById(long reviewId);
     Map<Long, Boolean> getAllReviewLikes();
 }

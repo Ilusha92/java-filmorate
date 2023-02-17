@@ -70,20 +70,17 @@ public class ReviewServiceImpl implements ReviewService {
         int newUseful;
         Map<Long, Boolean> reviewLikes = review.getLikes();
         AtomicInteger likes = new AtomicInteger();
-        AtomicInteger dislikes = new AtomicInteger();
         reviewLikes.values().forEach(like -> {
-            if (like) {
-                likes.getAndIncrement();
-            }
-            dislikes.getAndIncrement();
+            if (like) likes.getAndIncrement();
+            if (!like) likes.decrementAndGet();
         });
-        newUseful = likes.intValue() - dislikes.intValue();
+        newUseful = likes.intValue();
         review.setUseful(newUseful);
     }
 
     private void updateReviewLikes(Review review, Map<Long, Boolean> reviewLikes) {
         review.getLikes().putAll(reviewLikes);
         setNewUseful(review);
-        reviewStorage.update(review);
+        reviewStorage.updateUseful(review);
     }
 }

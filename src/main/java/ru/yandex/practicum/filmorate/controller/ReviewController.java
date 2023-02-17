@@ -20,25 +20,11 @@ public class ReviewController {
     private final ReviewService service;
     private final ReviewStorage storage;
 
-    // Одинаковый путь для эндпоинтов getAllReviews & getReviews
-
-    @GetMapping(params = {""})
-    public List<Review> getAllReviews() {
-        try {
-            List<Review> reviews = storage.getAllReviews();
-            log.info("Список всех ревью в размере {} переданы.", reviews.size());
-            return reviews;
-        } catch (DataAccessException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
-    }
-
     @GetMapping("/{id}")
     public Review getReviewById(@PathVariable("id") Long reviewId) {
         try {
             Review review = storage.getById(reviewId);
-            log.info("Обзор с ID #{} пользователя с ID #{} передан", review.getId(), review.getUserId());
+            log.info("Обзор с ID #{} пользователя с ID #{} передан", review.getReviewId(), review.getUserId());
             return review;
         } catch (DataAccessException e) {
             log.error(e.getMessage());
@@ -50,7 +36,7 @@ public class ReviewController {
     public Review postReview(@RequestBody @Valid Review review) {
         try {
             review = storage.add(review);
-            log.info("Отзыв с ID #{} добавлен.", review.getId());
+            log.info("Отзыв с ID #{} добавлен.", review.getReviewId());
             return review;
         } catch (ValidationException e) {
             log.error(e.getMessage());
@@ -62,7 +48,7 @@ public class ReviewController {
     public Review putReview(@RequestBody @Valid Review review) {
         try {
             review = storage.update(review);
-            log.info("Отзыв с ID #{} обновлен.", review.getId());
+            log.info("Отзыв с ID #{} обновлен.", review.getReviewId());
             return review;
         } catch (DataAccessException e) {
             log.error(e.getMessage());
@@ -70,37 +56,30 @@ public class ReviewController {
         }
     }
 
-    @DeleteMapping
-    public Review deleteReview(@RequestBody @Valid Review review) {
+    @DeleteMapping("/{id}")
+    public void deleteReview(@PathVariable("id") long reviewId) {
         try {
-            storage.delete(review);
-            log.info("Отзыв с ID #{} удален.", review.getId());
-            return review;
+            storage.delete(reviewId);
+            log.info("Отзыв с ID #{} удален.", reviewId);
         } catch (DataAccessException e) {
             log.error(e.getMessage());
             throw e;
         }
     }
 
-    @GetMapping(params = {"count"})
-    public List<Review> getReviews(@RequestParam(defaultValue = "10") Integer count) {
-        try {
-            List<Review> reviews = storage.getReviewsWithLimit(count);
-            log.info("Ревью в размере {} переданы", count);
-            return reviews;
-        } catch (DataAccessException e) {
-            log.error(e.getMessage());
-            throw e;
-        }
-    }
-
-    @GetMapping(params = {"filmId", "count"})
-    public List<Review> getReviewsWithFilmId(
-            @RequestParam Long filmId,
+    @GetMapping
+    public List<Review> getReviewsByFilmId(
+            @RequestParam(required = false) Long filmId,
             @RequestParam(defaultValue = "10") Integer count) {
         try {
-            List<Review> reviews = storage.getAllReviewsByFilmId(filmId, count);
-            log.info("Ревью в размере {} фильма с ID {}", count, filmId);
+            List<Review> reviews;
+            if (filmId == null) {
+                reviews = storage.getAllReviews();
+                log.info("Передан список всех отзывов в размере {}", reviews.size());
+                return reviews;
+            }
+            reviews = storage.getAllReviewsByFilmId(filmId, count);
+            log.info("Список отзывов в размере {} фильма с ID {}", count, filmId);
             return reviews;
         } catch (DataAccessException e) {
             log.error(e.getMessage());
