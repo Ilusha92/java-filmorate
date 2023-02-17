@@ -1,20 +1,16 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class FilmServiceManager implements FilmService {
@@ -26,6 +22,13 @@ public class FilmServiceManager implements FilmService {
     public FilmServiceManager(@Qualifier("filmDBStorage") FilmStorage filmStorage, UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        List<Film> resultList  = filmStorage.getCommonFilms(userId, friendId);
+        resultList.sort(Comparator.comparingInt(Film::getLikesCount).reversed());
+        return resultList;
     }
 
     @Override
@@ -87,5 +90,7 @@ public class FilmServiceManager implements FilmService {
     public Mpa getMpaById(int id) {
         return filmStorage.getMpaById(id);
     }
+
+
 
 }

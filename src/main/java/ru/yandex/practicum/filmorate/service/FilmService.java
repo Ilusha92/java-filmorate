@@ -4,7 +4,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface FilmService {
@@ -22,4 +21,5 @@ public interface FilmService {
     List<Mpa> getAllMpa();
     Mpa getMpaById(int id);
 
+    List<Film> getCommonFilms(int userId, int friendId);
 }

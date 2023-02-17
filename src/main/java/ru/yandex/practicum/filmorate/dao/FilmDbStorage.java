@@ -13,7 +13,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.validators.FilmValidator;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,6 +21,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
+
+
+
 
 @Slf4j
 @Component("filmDBStorage")
@@ -47,6 +50,19 @@ public class FilmDbStorage implements FilmStorage {
             films.forEach(film -> film.setDirectors(new HashSet<>(getDirectorByFilmId(film.getId()))));
         }
         return films;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        String sql2 = "SELECT DISTINCT(FILMID), NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID " +
+                "FROM FILMS as f JOIN " +
+                "(SELECT A.FILMID as FI, A.USERID as AU, B.USERID as BU " +
+                "FROM LIKESLIST A, LIKESLIST B " +
+                "WHERE A.FILMID = B.FILMID AND A.USERID <> B.USERID) as common " +
+                "ON f.FILMID = common.FI " +
+                "WHERE (AU = " + userId + " AND BU = " + friendId + ")";
+
+        return jdbcTemplate.query(sql2, new FilmMapper(jdbcTemplate, this));
     }
 
     @Override
@@ -123,8 +139,16 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void deleteFilmById(int filmId) {
-        checkFilmInDb(filmId);
-        jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", filmId);
+        if(checkFilmInDb(filmId)) {
+            jdbcTemplate.update("DELETE FROM film_genre where filmId = ?", filmId);
+            jdbcTemplate.update("DELETE FROM likesList where filmId = ?", filmId);
+            jdbcTemplate.update("DELETE FROM films where filmId = ?", filmId);
+            log.info("Фильм с filmId " + filmId + " был удален.");
+            jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", filmId);
+        } else {
+            log.info("Фильм с filmId " + filmId + " не был удален.");
+            throw new NotFoundObjectException("Фильм с filmId " + filmId + " не был удален.");
+        }
     }
 
     @Override
@@ -204,6 +228,8 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+
+
     private boolean checkMpaInDb(int id){
         String sql = "SELECT mpaId FROM mpa";
         SqlRowSet getMpaFromDb = jdbcTemplate.queryForRowSet(sql);
@@ -218,16 +244,16 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    private boolean checkFilmInDb(Integer id){
+    private boolean checkFilmInDb(Integer id) {
         String sql = "SELECT filmId FROM films";
         SqlRowSet getFilmFromDb = jdbcTemplate.queryForRowSet(sql);
         List<Integer> ids = new ArrayList<>();
         while (getFilmFromDb.next()){
             ids.add(getFilmFromDb.getInt("filmId"));
         }
-        if(ids.contains(id)){
+        if(ids.contains(id)) {
             return true;
-        }else{
+        } else {
             throw new NotFoundObjectException("Фильма с таким id нет в базе!");
         }
     }

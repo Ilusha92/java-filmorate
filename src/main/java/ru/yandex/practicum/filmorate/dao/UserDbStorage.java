@@ -1,19 +1,19 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component("userDBStorage")
@@ -77,7 +77,18 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User deleteUserById(int userId) {
-        return null;
+        Optional<User> userOptional = Optional.of(getUserById(userId));
+        if(userOptional.isPresent()) {
+            jdbcTemplate.update("DELETE FROM friendship where userId = ?", userId);
+            jdbcTemplate.update("DELETE FROM friendship where friendId = ?", userId);
+            jdbcTemplate.update("DELETE FROM likesList where userId = ?", userId);
+            jdbcTemplate.update("DELETE FROM users where userId = ?", userId);
+            log.info("Пользователь с userId " + userId + " был удален.");
+            return userOptional.get();
+        } else {
+            log.info("Пользователь с userId " + userId + " не был удален.");
+            throw new NotFoundObjectException("Пользователь с userId " + userId + " не был удален.");
+        }
     }
 
     @Override
@@ -150,6 +161,23 @@ public class UserDbStorage implements UserStorage {
         }else{
             return null;
         }
+    }
+
+    @Override
+    public List<Film> getRecommendedFilms(int id) {
+        String sql = "SELECT FILMID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID FROM FILMS as f JOIN " +
+                "(SELECT FILMID as recommended FROM LIKESLIST " +
+                "WHERE USERID  = (SELECT USERID FROM LIKESLIST " +
+                "    WHERE FILMID IN (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +") " +
+                "    AND USERID <> " + id +
+                "    GROUP BY USERID " +
+                "    ORDER BY count(USERID) DESC " +
+                "    LIMIT 1) " +
+                "AND FILMID NOT IN " +
+                "    (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +")) as Lr " +
+                "ON f.FILMID = recommended";
+
+        return jdbcTemplate.query(sql, new FilmMapper(jdbcTemplate, new FilmDbStorage(jdbcTemplate)));
     }
 
     private boolean checkUserInDb(Integer id){
