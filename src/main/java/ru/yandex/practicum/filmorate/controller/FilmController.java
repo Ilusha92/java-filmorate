@@ -31,19 +31,19 @@ public class FilmController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Film createFilm(@Valid @RequestBody Film film) {
-        log.info("Creating Film " + film);
+        log.info("Creating Film {}", film.getName());
         return filmService.createFilm(film);
     }
 
     @PutMapping
     public Film updateFilm(@Valid @RequestBody Film film) {
-        log.info("Updating Film " + film);
+        log.info("Updating Film {}", film.getName());
         return filmService.updateFilm(film);
     }
 
     @DeleteMapping("/{id}")
     public void deleteFilm(@PathVariable int id) {
-        log.info("Deleting Film " + id);
+        log.info("Deleting Film {}", id);
         filmService.deleteFilmById(id);
     }
 
@@ -53,12 +53,16 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Film likeFilm(@PathVariable int id, @PathVariable int userId) {
+    public Film likeFilm(
+            @PathVariable int id,
+            @PathVariable int userId) {
         return filmService.likeFilm(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Film deleteLikeFromFilm(@PathVariable int id, @PathVariable int userId) {
+    public Film deleteLikeFromFilm(
+            @PathVariable int id,
+            @PathVariable int userId) {
         return filmService.deleteLikeFromFilm(id, userId);
     }
 }

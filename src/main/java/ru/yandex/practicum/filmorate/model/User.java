@@ -1,10 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.Data;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -34,5 +34,4 @@ public class User {
     public void addFriendId(int userId){
         friendIds.add(userId);
     }
-
 }

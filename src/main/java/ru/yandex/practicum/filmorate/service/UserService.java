@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.List;
 
 public interface UserService {
-
     Collection<User> getAll();
     User getById(int id);
     User createUser(User user);

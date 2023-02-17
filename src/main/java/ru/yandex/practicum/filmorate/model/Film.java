@@ -3,7 +3,10 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -37,10 +40,10 @@ public class Film {
         likes.add(userId);
     }
 
-    public void removeLike(Integer userId){
+    public void removeLike(Integer userId) {
         if (likes.contains(userId)){
             likes.remove(userId);
-        }else{
+        } else {
             throw new NotFoundObjectException("Лайк от пользователя "+userId+" этому фильму и так не был поставлен, " +
                     "удалять нечего");
         }
@@ -49,5 +52,4 @@ public class Film {
     public void addGenre(Genre genre){
         genres.add(genre);
     }
-
 }
