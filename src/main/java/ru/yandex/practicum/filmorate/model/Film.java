@@ -27,6 +27,7 @@ public class Film {
     private Set<Integer> likes = new LinkedHashSet<>();
     private Set<Genre> genres = new LinkedHashSet<>();
     private Mpa mpa;
+    private Set<Director> directors;
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
