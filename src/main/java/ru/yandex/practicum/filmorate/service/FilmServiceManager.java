@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -21,6 +22,13 @@ public class FilmServiceManager implements FilmService {
     public FilmServiceManager(@Qualifier("filmDBStorage") FilmStorage filmStorage, UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        List<Film> resultList  = filmStorage.getCommonFilms(userId, friendId);
+        resultList.sort(Comparator.comparingInt(Film::getLikesCount).reversed());
+        return resultList;
     }
 
     @Override

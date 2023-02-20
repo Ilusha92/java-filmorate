@@ -61,3 +61,16 @@ CREATE TABLE IF NOT EXISTS review_likes (
     review_id LONG REFERENCES review (review_id) ON DELETE CASCADE,
     isLike BOOLEAN NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS directors (
+     directorId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+     directorName varchar
+     );
+
+     CREATE TABLE IF NOT EXISTS directorFilm (
+     directorFilmId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+     filmId int,
+     directorId int,
+     CONSTRAINT filmDirectorFilm FOREIGN KEY (filmId) REFERENCES films (filmId),
+     CONSTRAINT directorFilmDirector FOREIGN KEY (directorId) REFERENCES directors (directorId)
+     );
