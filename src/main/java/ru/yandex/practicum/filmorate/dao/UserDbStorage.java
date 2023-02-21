@@ -1,12 +1,18 @@
 package ru.yandex.practicum.filmorate.dao;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventTypes;
+import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.ResultSet;
@@ -17,14 +23,13 @@ import java.util.Optional;
 
 @Slf4j
 @Component("userDBStorage")
+@RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
 
     private static int userId = 0;
     private final JdbcTemplate jdbcTemplate;
-
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    private final EventDbStorage eventDbStorage;
+    private final FilmMapper filmMapper;
 
     private int generateUserId() {
         return ++userId;
@@ -94,6 +99,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public void addFriend(int userId, int friendId) {
         if(checkUserInDb(userId)&&checkUserInDb(friendId)){
+            eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.ADD, friendId);
             List<Integer> friends = new ArrayList<>();
             SqlRowSet checkFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship " +
                     "WHERE userId=?", friendId);
@@ -107,16 +113,19 @@ public class UserDbStorage implements UserStorage {
                 jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='apply'",
                                 Integer.class), friendId, userId);
+                //eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.UPDATE, friendId);
             }else{
                 jdbcTemplate.update("INSERT INTO friendship VALUES (?,?,?)", userId, friendId,
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
                                 Integer.class));
-            }
+//                eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.ADD, friendId);
+          }
         }
     }
 
     @Override
     public User deleteFriend(int userId, int friendId) {
+        eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.REMOVE, friendId);
         jdbcTemplate.update("DELETE FROM friendship WHERE userId=? AND friendId=?", userId, friendId);
         List<Integer> friends = new ArrayList<>();
         SqlRowSet checkFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship " +
@@ -128,6 +137,7 @@ public class UserDbStorage implements UserStorage {
             jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                     jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
                             Integer.class), friendId, userId);
+            //eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.REMOVE, friendId);
         }
         return getUserById(friendId);
     }
@@ -177,7 +187,7 @@ public class UserDbStorage implements UserStorage {
                 "    (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +")) as Lr " +
                 "ON f.FILMID = recommended";
 
-        return jdbcTemplate.query(sql, new FilmMapper(jdbcTemplate, new FilmDbStorage(jdbcTemplate)));
+        return jdbcTemplate.query(sql, filmMapper);
     }
 
     private boolean checkUserInDb(Integer id){
@@ -210,5 +220,9 @@ public class UserDbStorage implements UserStorage {
         } else {
             return null;
         }
+    }
+    @Override
+    public List<Event>  getEvents(int id) {
+        return eventDbStorage.getEvent(id);
     }
 }

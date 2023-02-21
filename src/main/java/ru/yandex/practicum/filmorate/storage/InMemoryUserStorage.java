@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.validators.UserValidator;
@@ -78,6 +79,11 @@ public class InMemoryUserStorage implements UserStorage{
 
     @Override
     public List<Film> getRecommendedFilms(int id) {
+        return null;
+    }
+
+    @Override
+    public List<Event> getEvents(int id) {
         return null;
     }
 

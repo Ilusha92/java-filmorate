@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -77,5 +78,10 @@ public class UserServiceManager implements UserService{
     @Override
     public List<Film> getRecommendedFilms(int id) {
         return userStorage.getRecommendedFilms(id);
+    }
+
+    @Override
+    public List<Event> getEvents(int id) {
+        return userStorage.getEvents(id);
     }
 }

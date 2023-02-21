@@ -8,8 +8,11 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventTypes;
+import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.review.ReviewLikesStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
@@ -27,6 +30,7 @@ public class ReviewDbStorage implements ReviewStorage {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final JdbcTemplate jdbcTemplate;
     private final ReviewLikesStorage reviewLikesStorage;
+    private final EventDbStorage eventDbStorage;
 
     @Override
     public Review add(Review review) {
@@ -37,18 +41,24 @@ public class ReviewDbStorage implements ReviewStorage {
         SqlParameterSource parameterSource = getParameterSource(review);
         namedParameterJdbcTemplate.update(sql, parameterSource);
         reviewLikesStorage.add(review);
+        eventDbStorage.saveEvent(review.getUserId(), EventTypes.REVIEW,
+                                    OperationTypes.ADD, review.getReviewId());
         return review;
     }
 
     @Override
     public Review update(Review review) {
         checkReviewById(review.getReviewId());
+        Integer userId = jdbcTemplate.queryForObject("SELECT USERID FROM REVIEW WHERE REVIEW_ID = "
+                + review.getReviewId(), Integer.class);
         String sql = "UPDATE review SET content = :content, isPositive = :isPositive WHERE review_id = :id";
         SqlParameterSource parameterSource = new MapSqlParameterSource()
                 .addValue("id", review.getReviewId())
                 .addValue("content", review.getContent())
                 .addValue("isPositive", review.getIsPositive());
         namedParameterJdbcTemplate.update(sql, parameterSource);
+        eventDbStorage.saveEvent(userId, EventTypes.REVIEW,
+                OperationTypes.UPDATE, review.getReviewId());
         return getById(review.getReviewId());
     }
 
@@ -66,10 +76,13 @@ public class ReviewDbStorage implements ReviewStorage {
     @Override
     public void delete(long reviewId) {
         checkReviewById(reviewId);
+        Review review = getById(reviewId);
         String sql = "DELETE FROM review WHERE review_id = :id";
         SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("id", reviewId);
         namedParameterJdbcTemplate.update(sql, parameterSource);
         reviewLikesStorage.delete(reviewId);
+        eventDbStorage.saveEvent(Math.toIntExact(review.getUserId()), EventTypes.REVIEW,
+                OperationTypes.REMOVE, Math.toIntExact(review.getReviewId()));
     }
 
     @Override
