@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.List;
 
 public interface UserService {
-
     Collection<User> getAll();
     User getById(int id);
     User createUser(User user);
@@ -17,6 +16,5 @@ public interface UserService {
     User deleteFriend(int userId, int friendId);
     List<User> getFriends(int id);
     List<User> getCommonFriends(int userId, int otherId);
-
     List<Film> getRecommendedFilms(int id);
 }

@@ -32,7 +32,7 @@ public class FilmDbStorage implements FilmStorage {
 
     private static int filmId = 0;
     private final JdbcTemplate jdbcTemplate;
-    private static final LocalDate FILMSTARTDATE = LocalDate.of(1895, 12, 28);
+    private static final LocalDate FILM_START_DATE = LocalDate.of(1895, 12, 28);
 
 
     public FilmDbStorage(JdbcTemplate jdbcTemplate) {
@@ -74,17 +74,17 @@ public class FilmDbStorage implements FilmStorage {
                 film.setDirectors(new HashSet<>(getDirectorByFilmId(id)));
             }
             return film;
-        }else{
+        } else {
             return null;
         }
     }
 
     @Override
     public Film createFilm(Film film) {
-        if (film.getReleaseDate().isBefore(FILMSTARTDATE)) {
+        if (film.getReleaseDate().isBefore(FILM_START_DATE)) {
             log.info("Не пройдена валидация даты выпуска фильма. Так рано фильмы не снимали!");
             throw new ValidationException("Так рано фильмы не снимали!");
-        }else {
+        } else {
             film.setId(generateFilmId());
             jdbcTemplate.update("INSERT INTO films(filmId, name, description, release_date, duration, mpaId) " +
                             "VALUES(?,?,?,?,?,?)",
@@ -182,7 +182,7 @@ public class FilmDbStorage implements FilmStorage {
     public List<Genre> getAllGenres() {
         List<Genre> genres = new ArrayList<>();
         SqlRowSet allGenres = jdbcTemplate.queryForRowSet("SELECT * FROM genre");
-        while(allGenres.next()){
+        while (allGenres.next()) {
             Genre genre = new Genre(allGenres.getInt("genreId"), allGenres.getString("name"));
             genres.add(genre);
         }
@@ -193,12 +193,12 @@ public class FilmDbStorage implements FilmStorage {
     public Genre getGenreById(int id) {
         checkGenreInDb(id);
         SqlRowSet genreRows = jdbcTemplate.queryForRowSet("SELECT * FROM genre WHERE genreId = ?", id);
-        if(genreRows.next()){
+        if (genreRows.next()) {
             Genre genre = new Genre(genreRows.getInt("genreId"),
                     genreRows.getString("name"));
             log.info("Жанр с id={}, это {}.", genre.getId(), genre.getName());
             return genre;
-        }else{
+        } else {
             log.info("Жанра с таким id нет!");
             return null;
         }
@@ -208,38 +208,36 @@ public class FilmDbStorage implements FilmStorage {
     public List<Mpa> getAllMpa() {
         List<Mpa> mpas = new ArrayList<>();
         SqlRowSet allMpas = jdbcTemplate.queryForRowSet("SELECT * FROM mpa");
-        while(allMpas.next()){
+        while (allMpas.next()) {
             Mpa mpa = new Mpa(allMpas.getInt("mpaId"), allMpas.getString("name"));
             mpas.add(mpa);
         }
         return mpas;
     }
 
-    public Mpa getMpaById(int id){
+    public Mpa getMpaById(int id) {
         checkMpaInDb(id);
         SqlRowSet mpaRows = jdbcTemplate.queryForRowSet("SELECT * FROM mpa WHERE mpaId = ?", id);
-        if(mpaRows.next()){
+        if (mpaRows.next()) {
             Mpa mpa = new Mpa(mpaRows.getInt("mpaId"), mpaRows.getString("name"));
             log.info("Рейтинг с id={}, это {}.", mpa.getId(), mpa.getName());
             return mpa;
-        }else{
+        } else {
             log.info("Рейтинга с таким id нет!");
             return null;
         }
     }
 
-
-
-    private boolean checkMpaInDb(int id){
+    private boolean checkMpaInDb(int id) {
         String sql = "SELECT mpaId FROM mpa";
         SqlRowSet getMpaFromDb = jdbcTemplate.queryForRowSet(sql);
         List<Integer> ids = new ArrayList<>();
         while (getMpaFromDb.next()){
             ids.add(getMpaFromDb.getInt("mpaId"));
         }
-        if(ids.contains(id)){
+        if (ids.contains(id)) {
             return true;
-        }else{
+        } else {
             throw new MpaNotFoundException("Рейтинга с таким id нет в базе!");
         }
     }
@@ -248,10 +246,10 @@ public class FilmDbStorage implements FilmStorage {
         String sql = "SELECT filmId FROM films";
         SqlRowSet getFilmFromDb = jdbcTemplate.queryForRowSet(sql);
         List<Integer> ids = new ArrayList<>();
-        while (getFilmFromDb.next()){
+        while (getFilmFromDb.next()) {
             ids.add(getFilmFromDb.getInt("filmId"));
         }
-        if(ids.contains(id)) {
+        if (ids.contains(id)) {
             return true;
         } else {
             throw new NotFoundObjectException("Фильма с таким id нет в базе!");
@@ -259,7 +257,7 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private Film makeFilm(ResultSet rs) throws SQLException {
-        if (rs.next()){
+        if (rs.next()) {
             Film film = new Film(rs.getString("name"),
                     rs.getString("description"),
                     rs.getDate("release_date").toLocalDate(),
@@ -267,46 +265,46 @@ public class FilmDbStorage implements FilmStorage {
             film.setId(rs.getInt("filmId"));
             film.setMpa(getMpaById(rs.getInt("mpaId")));
             SqlRowSet getFilmGenres = jdbcTemplate.queryForRowSet("SELECT genreId FROM film_genre WHERE filmId=?", film.getId());
-            while(getFilmGenres.next()){
+            while (getFilmGenres.next()) {
                 Genre genre = getGenreById(getFilmGenres.getInt("genreId"));
                 film.addGenre(genre);
             }
             SqlRowSet getFilmLikes = jdbcTemplate.queryForRowSet("SELECT userId FROM likesList WHERE filmId = ?",
                     film.getId());
-            while(getFilmLikes.next()){
+            while (getFilmLikes.next()) {
                 film.addLIke(getFilmLikes.getInt("userId"));
             }
             return film;
-        }else{
+        } else {
             return null;
         }
 
     }
 
-    private boolean checkGenreInDb(Integer id){
+    private boolean checkGenreInDb(Integer id) {
         String sql = "SELECT genreId FROM genre";
         SqlRowSet getGenreFromDb = jdbcTemplate.queryForRowSet(sql);
         List<Integer> ids = new ArrayList<>();
-        while (getGenreFromDb.next()){
+        while (getGenreFromDb.next()) {
             ids.add(getGenreFromDb.getInt("genreId"));
         }
-        if(ids.contains(id)){
+        if (ids.contains(id)) {
             return true;
-        }else{
+        } else {
             throw new GenreNotFoundException("Жанра с таким id нет в базе!");
         }
     }
 
-    private boolean checkUserInDb(Integer id){
+    private boolean checkUserInDb(Integer id) {
         String sql = "SELECT userId FROM users";
         SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql);
         List<Integer> ids = new ArrayList<>();
-        while (getUsersFromDb.next()){
+        while (getUsersFromDb.next()) {
             ids.add(getUsersFromDb.getInt("userId"));
         }
-        if(ids.contains(id)){
+        if (ids.contains(id)) {
             return true;
-        }else{
+        } else {
             throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
         }
 

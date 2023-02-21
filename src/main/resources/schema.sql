@@ -46,6 +46,22 @@ CREATE TABLE IF NOT EXISTS friendshipStatus (
     description varchar
 );
 
+CREATE TABLE IF NOT EXISTS review (
+    review_id LONG PRIMARY KEY,
+    content varchar NOT NULL CHECK (content <> ' '),
+    isPositive boolean NOT NULL,
+    user_id LONG REFERENCES users (userId),
+    film_id LONG REFERENCES films (filmId),
+    useful int
+);
+
+CREATE TABLE IF NOT EXISTS review_likes (
+    id LONG GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id LONG REFERENCES users (userId) ON DELETE CASCADE,
+    review_id LONG REFERENCES review (review_id) ON DELETE CASCADE,
+    isLike BOOLEAN NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS directors (
      directorId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
      directorName varchar

@@ -33,7 +33,7 @@ public class FilmMapper implements ResultSetExtractor<List<Film>> {
                     rs.getInt("duration"));
             film.setId(rs.getInt("filmId"));
             film.setMpa(filmStorage.getMpaById(rs.getInt("mpaId")));
-            SqlRowSet getFilmGenres = jdbcTemplate.queryForRowSet("SELECT genreId FROM film_genre WHERE filmId=?", film.getId());
+            SqlRowSet getFilmGenres = jdbcTemplate.queryForRowSet("SELECT genreId FROM film_genre WHERE filmId = ?", film.getId());
             while(getFilmGenres.next()){
                 Genre genre = filmStorage.getGenreById(getFilmGenres.getInt("genreId"));
                 film.addGenre(genre);

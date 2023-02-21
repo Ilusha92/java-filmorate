@@ -40,10 +40,10 @@ public class Film {
         likes.add(userId);
     }
 
-    public void removeLike(Integer userId){
+    public void removeLike(Integer userId) {
         if (likes.contains(userId)){
             likes.remove(userId);
-        }else{
+        } else {
             throw new NotFoundObjectException("Лайк от пользователя "+userId+" этому фильму и так не был поставлен, " +
                     "удалять нечего");
         }

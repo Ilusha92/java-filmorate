@@ -7,7 +7,6 @@ import ru.yandex.practicum.filmorate.model.Mpa;
 import java.util.List;
 
 public interface FilmStorage {
-
     List<Film> getAllFilms();
     Film getFilmById(int filmId);
     Film createFilm(Film film);
@@ -20,6 +19,5 @@ public interface FilmStorage {
     Genre getGenreById(int id);
     List<Mpa> getAllMpa();
     Mpa getMpaById(int id);
-
     List<Film> getCommonFilms(int userId, int friendId);
 }
