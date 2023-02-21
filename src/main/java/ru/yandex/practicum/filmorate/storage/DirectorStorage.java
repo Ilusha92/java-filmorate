@@ -12,5 +12,4 @@ public interface DirectorStorage {
     Director findById (Integer id);
     Director delete (Integer id);
     List<Film> findFilmsByDirectorId (Integer directorId);
-
 }

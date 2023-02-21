@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
 import javax.validation.ValidationException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,6 +14,36 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
     private final ReviewStorage reviewStorage;
+
+    @Override
+    public Review add(Review review) {
+        return reviewStorage.add(review);
+    }
+
+    @Override
+    public Review update(Review review) {
+        return reviewStorage.update(review);
+    }
+
+    @Override
+    public void delete(long reviewId) {
+        reviewStorage.delete(reviewId);
+    }
+
+    @Override
+    public Review getById(long reviewId) {
+        return reviewStorage.getById(reviewId);
+    }
+
+    @Override
+    public List<Review> getAllReviewsByFilmId(long filmId, int limit) {
+        return reviewStorage.getAllReviewsByFilmId(filmId, limit);
+    }
+
+    @Override
+    public List<Review> getAllReviews() {
+        return reviewStorage.getAllReviews();
+    }
 
     @Override
     public Review addLike(long reviewId, long userId) {
