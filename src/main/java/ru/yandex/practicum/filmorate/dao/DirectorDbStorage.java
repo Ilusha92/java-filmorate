@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dao;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -19,13 +20,10 @@ import java.util.List;
 import java.util.Set;
 
 @Component
+@RequiredArgsConstructor
 public class DirectorDbStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
     private final FilmDbStorage filmDbStorage;
-    public DirectorDbStorage(JdbcTemplate jdbcTemplate, FilmDbStorage filmDbStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.filmDbStorage = filmDbStorage;
-    }
 
     @Override
     public List<Director> findAll() {
