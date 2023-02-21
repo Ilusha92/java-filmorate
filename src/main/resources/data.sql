@@ -3,10 +3,10 @@
 -- DELETE FROM films;
 -- DELETE FROM users;
 -- DELETE FROM film_genre;
-DELETE FROM genre;
+-- DELETE FROM genre;
 -- DELETE FROM likesList;
 -- DELETE FROM friendship;
-DELETE FROM mpa;
+-- DELETE FROM mpa;
 -- DELETE FROM friendshipStatus;
 -- DELETE FROM events;
 INSERT INTO genre (genreId, name) VALUES (1, 'Комедия');

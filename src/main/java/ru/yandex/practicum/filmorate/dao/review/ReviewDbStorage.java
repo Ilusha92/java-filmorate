@@ -49,7 +49,7 @@ public class ReviewDbStorage implements ReviewStorage {
     @Override
     public Review update(Review review) {
         checkReviewById(review.getReviewId());
-        Integer userId = jdbcTemplate.queryForObject("SELECT USERID FROM REVIEW WHERE REVIEW_ID = "
+        Integer userId = jdbcTemplate.queryForObject("SELECT USER_ID FROM REVIEW WHERE REVIEW_ID = "
                 + review.getReviewId(), Integer.class);
         String sql = "UPDATE review SET content = :content, isPositive = :isPositive WHERE review_id = :id";
         SqlParameterSource parameterSource = new MapSqlParameterSource()

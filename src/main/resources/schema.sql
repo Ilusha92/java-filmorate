@@ -1,3 +1,5 @@
+DROP ALL OBJECTS DELETE FILES;
+
 CREATE TABLE IF NOT EXISTS genre (
     genreId int PRIMARY KEY ,
     name varchar

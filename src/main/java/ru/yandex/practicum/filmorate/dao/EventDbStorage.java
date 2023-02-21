@@ -1,10 +1,10 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.mappers.EventMapper;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.enums.EventTypes;
 import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
@@ -18,10 +18,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventDbStorage {
     private final JdbcTemplate jdbcTemplate;
-//    @Autowired
-//    public EventDbStorage(JdbcTemplate jdbcTemplate) {
-//        this.jdbcTemplate = jdbcTemplate;
-//    }
 
 
     public void saveEvent(long userId, EventTypes eventType, OperationTypes operation, long entityId) {
@@ -31,6 +27,9 @@ public class EventDbStorage {
     }
 
     public List<Event> getEvent(int id) {
+        if (!jdbcTemplate.queryForRowSet("SELECT USERID FROM USERS WHERE USERID =?", id).next()) {
+         throw new NotFoundObjectException("User with id " + id + " not found");
+        }
         return jdbcTemplate.queryForStream("SELECT * " +
                 "FROM EVENTS " +
                 "WHERE USERID = ?;", (rs, rowNum) ->
