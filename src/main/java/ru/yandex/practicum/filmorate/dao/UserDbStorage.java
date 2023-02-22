@@ -1,12 +1,18 @@
 package ru.yandex.practicum.filmorate.dao;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventTypes;
+import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.ResultSet;
@@ -17,14 +23,14 @@ import java.util.Optional;
 
 @Slf4j
 @Component("userDBStorage")
+@RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
 
     private static int userId = 0;
     private final JdbcTemplate jdbcTemplate;
-
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    private final EventDbStorage eventDbStorage;
+    private final FilmMapper filmMapper;
+    private final UserMapper userMapper;
 
     private int generateUserId() {
         return ++userId;
@@ -33,7 +39,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users";
-        return jdbcTemplate.query(sql, new UserMapper(jdbcTemplate, this));
+        return jdbcTemplate.query(sql, userMapper);
     }
 
     @Override
@@ -107,23 +113,28 @@ public class UserDbStorage implements UserStorage {
                 jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='apply'",
                                 Integer.class), friendId, userId);
+                eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.UPDATE, friendId);
             }else{
                 jdbcTemplate.update("INSERT INTO friendship VALUES (?,?,?)", userId, friendId,
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
                                 Integer.class));
-            }
+                eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.ADD, friendId);
+          }
         }
     }
 
     @Override
     public User deleteFriend(int userId, int friendId) {
+        eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.REMOVE, friendId);
         jdbcTemplate.update("DELETE FROM friendship WHERE userId=? AND friendId=?", userId, friendId);
         List<Integer> friends = new ArrayList<>();
         SqlRowSet checkFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship " +
                 "WHERE userId=?", userId);
+
         while(checkFriends.next()){
             friends.add(checkFriends.getInt("friendId"));
         }
+
         if(friends.contains(userId)){
             jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                     jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
@@ -134,7 +145,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getFriends(int id) {
-        if(checkUserInDb(id)){
+        if(checkUserInDb(id)) {
             List<User> userFriends = new ArrayList<>();
             SqlRowSet getFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship WHERE userId=?",
                     id);
@@ -142,7 +153,7 @@ public class UserDbStorage implements UserStorage {
                 userFriends.add(getUserById(getFriends.getInt("friendId")));
             }
             return userFriends;
-        }else{
+        } else {
             return null;
         }
     }
@@ -150,7 +161,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getCommonFriends(int userId, int otherId) {
-        if(checkUserInDb(userId)){
+        if(checkUserInDb(userId)) {
             List<User> userFriends = new ArrayList<>();
             SqlRowSet getFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship WHERE userId=?",
                     userId);
@@ -158,7 +169,7 @@ public class UserDbStorage implements UserStorage {
                 userFriends.add(getUserById(getFriends.getInt("friendId")));
             }
             return userFriends;
-        }else{
+        } else {
             return null;
         }
     }
@@ -177,21 +188,16 @@ public class UserDbStorage implements UserStorage {
                 "    (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +")) as Lr " +
                 "ON f.FILMID = recommended";
 
-        return jdbcTemplate.query(sql, new FilmMapper(jdbcTemplate, new FilmDbStorage(jdbcTemplate)));
+        return jdbcTemplate.query(sql, filmMapper);
     }
 
-    private boolean checkUserInDb(Integer id){
-        String sql = "SELECT userId FROM users";
-        SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql);
-        List<Integer> ids = new ArrayList<>();
-        while (getUsersFromDb.next()){
-            ids.add(getUsersFromDb.getInt("userId"));
+    private boolean checkUserInDb(Integer id) {
+        String sql = "SELECT userId FROM users where USERID =?";
+        SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql, id);
+        if (!getUsersFromDb.next()) {
+            throw new NotFoundObjectException("Пользователя с id" + id + " нет в базе!");
         }
-        if(ids.contains(id)){
-            return true;
-        }else{
-            throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
-        }
+        return true;
     }
 
     private User makeUser(ResultSet rs) throws SQLException {
@@ -210,5 +216,9 @@ public class UserDbStorage implements UserStorage {
         } else {
             return null;
         }
+    }
+    @Override
+    public List<Event>  getEvents(int id) {
+        return eventDbStorage.getEvent(id);
     }
 }

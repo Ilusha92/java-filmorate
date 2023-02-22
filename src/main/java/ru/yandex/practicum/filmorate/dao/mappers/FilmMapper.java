@@ -1,10 +1,13 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.dao.mappers;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -14,15 +17,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@RequiredArgsConstructor
 public class FilmMapper implements ResultSetExtractor<List<Film>> {
 
     private final JdbcTemplate jdbcTemplate;
     private final FilmStorage filmStorage;
-
-    public FilmMapper(JdbcTemplate jdbcTemplate, @Qualifier("filmDBStorage") FilmStorage filmStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.filmStorage = filmStorage;
-    }
 
     public List<Film> extractData(ResultSet rs) throws SQLException, DataAccessException {
         List<Film> films = new ArrayList<>();

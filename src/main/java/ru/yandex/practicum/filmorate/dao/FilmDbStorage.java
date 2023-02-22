@@ -1,9 +1,12 @@
 package ru.yandex.practicum.filmorate.dao;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.mappers.DirectorMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
 import ru.yandex.practicum.filmorate.exceptions.GenreNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
@@ -12,6 +15,8 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.enums.EventTypes;
+import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.ResultSet;
@@ -20,24 +25,17 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.Optional;
-
-
 
 
 @Slf4j
 @Component("filmDBStorage")
+@RequiredArgsConstructor
 public class FilmDbStorage implements FilmStorage {
 
     private static int filmId = 0;
     private final JdbcTemplate jdbcTemplate;
     private static final LocalDate FILM_START_DATE = LocalDate.of(1895, 12, 28);
-
-
-    public FilmDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    private final EventDbStorage eventDbStorage;
 
     private int generateFilmId() {
         return ++filmId;
@@ -156,6 +154,7 @@ public class FilmDbStorage implements FilmStorage {
         checkFilmInDb(filmId);
         checkUserInDb(userId);
         jdbcTemplate.update("INSERT INTO likesList VALUES (?,?)", filmId, userId);
+        eventDbStorage.saveEvent(userId, EventTypes.LIKE, OperationTypes.ADD, filmId);
         return getFilmById(filmId);
     }
 
@@ -164,6 +163,7 @@ public class FilmDbStorage implements FilmStorage {
         checkFilmInDb(filmId);
         checkUserInDb(userId);
         jdbcTemplate.update("DELETE FROM likesList WHERE filmId=? AND userId=?", filmId, userId);
+        eventDbStorage.saveEvent(userId, EventTypes.LIKE, OperationTypes.REMOVE, filmId);
         return getFilmById(filmId);
     }
 
