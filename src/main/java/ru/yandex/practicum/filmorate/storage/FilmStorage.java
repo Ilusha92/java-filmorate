@@ -20,4 +20,5 @@ public interface FilmStorage {
     List<Mpa> getAllMpa();
     Mpa getMpaById(int id);
     List<Film> getCommonFilms(int userId, int friendId);
+    List<Film> searchFilms(String query, List<String> by);
 }
