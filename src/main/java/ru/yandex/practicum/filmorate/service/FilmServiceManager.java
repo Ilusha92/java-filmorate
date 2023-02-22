@@ -91,4 +91,13 @@ public class FilmServiceManager implements FilmService {
         return filmStorage.getMpaById(id);
     }
 
+    @Override
+    public List<Film> searchFilms(String query, List<String> by) {
+
+        List<Film> resultList  = filmStorage.searchFilms(query, by);
+        resultList.sort(Comparator.comparingInt(Film::getLikesCount).reversed());
+        return resultList;
+
+    }
+
 }

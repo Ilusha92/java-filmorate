@@ -35,6 +35,7 @@ public class FilmDbStorage implements FilmStorage {
     private static int filmId = 0;
     private final JdbcTemplate jdbcTemplate;
     private static final LocalDate FILM_START_DATE = LocalDate.of(1895, 12, 28);
+    //private static final String SEARCH_BY_TITLE = "SELECT * FROM films WHERE lower(name) LIKE lower(CONCAT('%',?,'%'))";
     private final EventDbStorage eventDbStorage;
 
     private int generateFilmId() {
@@ -317,4 +318,44 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.query(statement, new DirectorMapper(), filmId);
     }
 
+    public List<Film> searchFilms(String query1, List<String> by) {
+        List<Film> films1 = new ArrayList<>();
+        if (by.size() == 1) {
+            if (by.get(0).toLowerCase().equals("title")) {
+                searchByTitle(query1, films1);
+                }
+            if (by.get(0).toLowerCase().equals("director")) {
+                searchByDirector(query1, films1);
+            }
+        }
+        if (by.size() == 2) {
+            searchByTitle(query1, films1);
+            searchByDirector(query1, films1);
+        }
+        return films1;
+    }
+
+    private void searchByTitle(String query1, List<Film> films1) {
+        SqlRowSet searchByTitle = jdbcTemplate.queryForRowSet("SELECT * FROM films WHERE lower(name) LIKE lower(CONCAT('%',?,'%'))", query1);
+        while (searchByTitle.next()) {
+            Film film = new Film(searchByTitle.getString("name"),
+                    searchByTitle.getString("description"),
+                    searchByTitle.getDate("release_date").toLocalDate(),
+                    searchByTitle.getInt("duration"));
+            film.setId(searchByTitle.getInt("filmId"));
+            film.setMpa(getMpaById(searchByTitle.getInt("mpaId")));
+            films1.add(film);
+        }
+    }
+
+    private void searchByDirector(String query1, List<Film> films1) {
+        SqlRowSet searchByDirector = jdbcTemplate.queryForRowSet(
+                "SELECT df.* FROM directorFilm as df " +
+                        "INNER JOIN directors as d ON df.directorId = d.directorId " +
+                        "WHERE lower(d.directorName) LIKE lower(CONCAT('%',?,'%'))", query1);
+        while (searchByDirector.next()) {
+            Integer filmId1 = searchByDirector.getInt("filmId");
+            films1.add(getFilmById(filmId1));
+        }
+    }
 }

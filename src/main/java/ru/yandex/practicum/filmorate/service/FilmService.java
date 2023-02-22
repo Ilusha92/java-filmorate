@@ -20,6 +20,6 @@ public interface FilmService {
     Genre getGenreById(int id);
     List<Mpa> getAllMpa();
     Mpa getMpaById(int id);
-
+    List <Film> searchFilms(String query, List<String> by);
     List<Film> getCommonFilms(int userId, int friendId);
 }
