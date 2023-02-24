@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-
+import java.util.Set;
 
 @Slf4j
 @Component("filmDBStorage")
@@ -91,21 +91,46 @@ public class FilmDbStorage implements FilmStorage {
         }, keyHolder);
         int generatedId = Objects.requireNonNull(keyHolder.getKey()).intValue();
         film.setId(generatedId);
-
-        if (film.getGenres().size() > 0) {
-            for (Genre genre : film.getGenres()) {
-                jdbcTemplate.update("INSERT INTO film_genre(filmId, genreId) VALUES(?,?)",
-                        film.getId(),
-                        genre.getId());
-            }
-        }
-
-        jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
-        if (film.getDirectors() != null) {
-            film.getDirectors().forEach(d-> jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), d.getId()));
-        }
-
+        setGenres(film);
+        setDirectors(film);
         return getFilmById(generatedId);
+    }
+
+    private void setGenres(Film film) {
+        Set<Genre> genres = film.getGenres();
+        int filmId = film.getId();
+        int commaAndSpace = 2;
+        if (genres.size() > 0) {
+            StringBuilder sqlGenre = new StringBuilder("INSERT INTO film_genre(filmId, genreId) VALUES ");
+            genres.forEach(genre -> sqlGenre.append(String.format("(%d, %d), ", filmId, genre.getId())));
+            sqlGenre.setLength(sqlGenre.length() - commaAndSpace);
+            jdbcTemplate.update(sqlGenre.toString());
+        }
+    }
+
+    private void setDirectors(Film film) {
+        int commaAndSpace = 2;
+        int filmId = film.getId();
+        jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
+        Set<Director> directors = film.getDirectors();
+        if (directors != null && directors.size() > 0) {
+            StringBuilder sqlDirectors = new StringBuilder("INSERT INTO directorFilm (filmId, directorId) VALUES ");
+            directors.forEach(director -> sqlDirectors.append(String.format("(%d, %d), ", filmId, director.getId())));
+            sqlDirectors.setLength(sqlDirectors.length() - commaAndSpace);
+            jdbcTemplate.update(sqlDirectors.toString());
+        }
+    }
+
+    private void setLikes(Film film) {
+        int commaAndSpace = 2;
+        int filmId = film.getId();
+        Set<Integer> likes = film.getLikes();
+        if (likes.size() > 0) {
+            StringBuilder sql = new StringBuilder("INSERT INTO likesList VALUES ");
+            likes.forEach(userId -> sql.append(String.format("(%d, %d)", filmId, userId)));
+            sql.setLength(sql.length() - commaAndSpace);
+            jdbcTemplate.update(sql.toString());
+        }
     }
 
     @Override
@@ -121,17 +146,9 @@ public class FilmDbStorage implements FilmStorage {
                     film.getId());
             jdbcTemplate.update("DELETE FROM likesList WHERE filmId=?", film.getId());
             jdbcTemplate.update("DELETE FROM film_genre WHERE filmId=?", film.getId());
-            for (Integer userId : film.getLikes()) {
-                jdbcTemplate.update("INSERT INTO likesList VALUES(?,?)", film.getId(), userId);
-            }
-            for (Genre genre : film.getGenres()) {
-                jdbcTemplate.update("INSERT INTO film_genre(filmId, genreId) " +
-                        "VALUES(?,?)", film.getId(), genre.getId());
-            }
-            jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", film.getId());
-            if (film.getDirectors() != null) {
-                film.getDirectors().forEach(d-> jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), d.getId()));
-            }
+            setLikes(film);
+            setGenres(film);
+            setDirectors(film);
         }
         return getFilmById(film.getId());
     }
@@ -203,9 +220,8 @@ public class FilmDbStorage implements FilmStorage {
         } else {
             throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
         }
-
-
     }
+
     private List<Director> getDirectorByFilmId (Integer filmId) {
         String statement = "SELECT directorFilm.filmId, directors.directorId, directors.directorName " +
                 "FROM directorFilm LEFT JOIN directors " +

@@ -113,12 +113,11 @@ public class UserDbStorage implements UserStorage {
                 jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='apply'",
                                 Integer.class), friendId, userId);
-
-            }else{
+            } else {
                 jdbcTemplate.update("INSERT INTO friendship VALUES (?,?,?)", userId, friendId,
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
                                 Integer.class));
-          }
+            }
         }
     }
 
@@ -155,7 +154,6 @@ public class UserDbStorage implements UserStorage {
             return null;
         }
     }
-
 
     @Override
     public List<User> getCommonFriends(int userId, int otherId) {
