@@ -21,9 +21,7 @@ import java.util.stream.Collectors;
 
 @Repository("reviewDbStorage")
 @RequiredArgsConstructor
-@Slf4j
 public class ReviewDbStorage implements ReviewStorage {
-    private static long REVIEW_ID;
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final JdbcTemplate jdbcTemplate;
 
@@ -120,11 +118,6 @@ public class ReviewDbStorage implements ReviewStorage {
         String sql = "SELECT review_id FROM review WHERE review_id = :id";
         SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("id", reviewId);
         namedParameterJdbcTemplate.queryForObject(sql, parameterSource, (rs, rowNum) -> rs.getLong("review_id"));
-    }
-
-    private void createId(Review review) {
-        if (review.getReviewId() < REVIEW_ID || review.getReviewId() == 0) review.setReviewId(++REVIEW_ID);
-        REVIEW_ID = review.getReviewId();
     }
 
     private void negativeUserOrFilmCheck(Review review) throws NotFoundObjectException {
