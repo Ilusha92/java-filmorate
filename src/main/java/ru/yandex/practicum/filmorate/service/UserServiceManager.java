@@ -7,13 +7,13 @@ import ru.yandex.practicum.filmorate.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.enums.EventTypes;
 import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -22,6 +22,7 @@ public class UserServiceManager implements UserService{
 
     private final UserStorage userStorage;
     private final EventDbStorage eventDbStorage;
+    private final GenreService genreService;
 
     @Override
     public List<User> getAll() {
@@ -85,11 +86,24 @@ public class UserServiceManager implements UserService{
 
     @Override
     public List<Film> getRecommendedFilms(int id) {
-        return userStorage.getRecommendedFilms(id);
+        List<Film> recommendedFilms = userStorage.getRecommendedFilms(id);
+        Map<Integer, Set<Genre>> allGenres = genreService.getAllGenresOfAllFilms();
+        for (Film film : recommendedFilms) {
+            film.setGenres(allGenres.get(film.getId()));
+            if (film.getGenres() == null) {
+                film.setGenres(new HashSet<>());
+            }
+        }
+        return recommendedFilms;
     }
 
     @Override
     public List<Event> getEvents(int id) {
         return eventDbStorage.getEvent(id);
+    }
+
+    @Override
+    public boolean checkUserInDb(Integer userId) {
+        return userStorage.checkUserInDb(userId);
     }
 }

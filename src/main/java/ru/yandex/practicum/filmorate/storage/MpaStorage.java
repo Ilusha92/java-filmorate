@@ -10,5 +10,5 @@ public interface MpaStorage {
 
     Mpa getMpaById(int id);
 
-    Map<Integer, String> getMpaIdNamesMap();
+    Map<Integer, Mpa> getMpasMap();
 }

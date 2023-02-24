@@ -7,38 +7,33 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.service.MpaService;
-import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class FilmMapper implements ResultSetExtractor<List<Film>> {
 
     private final JdbcTemplate jdbcTemplate;
-    private final GenreStorage genreStorage;
     private final MpaService mpaService;
+
 
     public List<Film> extractData(ResultSet rs) throws SQLException, DataAccessException {
         List<Film> films = new ArrayList<>();
+        Map<Integer, Mpa> mpas = mpaService.getMpasMap();
         while (rs.next()) {
             Film film = new Film(rs.getString("name"),
                     rs.getString("description"),
                     rs.getDate("release_date").toLocalDate(),
                     rs.getInt("duration"));
             film.setId(rs.getInt("filmId"));
-            film.setMpa(mpaService.getMpaById(rs.getInt("mpaId")));
-            SqlRowSet getFilmGenres = jdbcTemplate.queryForRowSet("SELECT genreId FROM film_genre WHERE filmId = ?", film.getId());
-            while(getFilmGenres.next()){
-                Genre genre = genreStorage.getGenreById(getFilmGenres.getInt("genreId"));
-                film.addGenre(genre);
-            }
-            film.setGenres(genreStorage.getGenresByFilmId(film.getId()));
+            film.setMpa(mpas.get(rs.getInt("mpaId")));
 
             SqlRowSet getFilmLikes = jdbcTemplate.queryForRowSet("SELECT userId FROM likesList WHERE filmId = ?",
                     film.getId());

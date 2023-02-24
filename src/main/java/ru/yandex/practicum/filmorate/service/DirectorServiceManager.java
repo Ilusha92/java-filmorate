@@ -1,23 +1,17 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.DirectorStorage;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class DirectorServiceManager implements DirectorService {
-    private DirectorStorage storage;
-
-    @Autowired
-    public DirectorServiceManager(DirectorStorage storage) {
-        this.storage = storage;
-    }
+    private final DirectorStorage storage;
 
     @Override
     public Director create(Director director) {
@@ -45,16 +39,7 @@ public class DirectorServiceManager implements DirectorService {
     }
 
     @Override
-    public List<Film> getFilmsSortedByLikesOrYear(Integer id, String param) {
-        List<Film> filmsByDirectorId = storage.findFilmsByDirectorId(id);
-
-        if ("year".equalsIgnoreCase(param)) {
-            return filmsByDirectorId
-                    .stream().sorted(Comparator.comparing(Film::getReleaseDate)).collect(Collectors.toList());
-        }
-        else  if ("likes".equalsIgnoreCase(param)) {
-            return filmsByDirectorId.stream().sorted(Comparator.comparing(film -> film.getLikes().size())).collect(Collectors.toList());
-        }
-        return filmsByDirectorId;
+    public List<Film> findFilmsByDirectorId(Integer directorId) {
+        return storage.findFilmsByDirectorId(directorId);
     }
 }

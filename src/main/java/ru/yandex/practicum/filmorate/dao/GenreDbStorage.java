@@ -33,9 +33,8 @@ public class GenreDbStorage implements GenreStorage {
     public Genre getGenreById(int id) {
         SqlRowSet genreRows = jdbcTemplate.queryForRowSet("SELECT * FROM genre WHERE genreId = ?", id);
         if (genreRows.next()) {
-            Genre genre = new Genre(genreRows.getInt("genreId"),
+            return new Genre(genreRows.getInt("genreId"),
                     genreRows.getString("name"));
-            return genre;
         } else {
             throw new GenreNotFoundException("Жанра с таким id нет в базе!");
         }
@@ -55,12 +54,31 @@ public class GenreDbStorage implements GenreStorage {
     }
 
     @Override
-    public Map<Integer, String> getGenreIdNamesMap() {
-        Map<Integer, String> genreIdNamesMap = new HashMap<>();
+    public Map<Integer, Genre> getGenresMap() {
+        Map<Integer, Genre> genreIdNamesMap = new HashMap<>();
         List<Genre> genres = getAllGenres();
         for (Genre genre : genres) {
-            genreIdNamesMap.put(genre.getId(), genre.getName());
+            genreIdNamesMap.put(genre.getId(), genre);
         }
         return genreIdNamesMap;
+    }
+
+    public Map<Integer, Set<Genre>> getAllGenresOfAllFilms() {
+        Map<Integer, Set<Genre>> genresOfAllFilms = new HashMap<>();
+        String sql = "SELECT filmId, genreId FROM FILM_GENRE";
+        SqlRowSet rs = jdbcTemplate.queryForRowSet(sql);
+        Map<Integer, Genre> allGenres = getGenresMap();
+        while (rs.next()) {
+            Integer filmId = rs.getInt("filmId");
+            Integer genreId = rs.getInt("genreId");
+            if (genresOfAllFilms.containsKey(filmId)) {
+                genresOfAllFilms.get(filmId).add(allGenres.get(genreId));
+                continue;
+            }
+            genresOfAllFilms.put(filmId, new HashSet<>() {{
+                add(allGenres.get(genreId));
+            }});
+        }
+        return genresOfAllFilms;
     }
 }

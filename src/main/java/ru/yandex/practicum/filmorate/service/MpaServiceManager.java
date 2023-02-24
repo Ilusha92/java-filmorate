@@ -24,7 +24,7 @@ public class MpaServiceManager implements MpaService {
     }
 
     @Override
-    public Map<Integer, String> getMpaIdNamesMap() {
-        return mpaStorage.getMpaIdNamesMap();
+    public Map<Integer, Mpa> getMpasMap() {
+        return mpaStorage.getMpasMap();
     }
 }
