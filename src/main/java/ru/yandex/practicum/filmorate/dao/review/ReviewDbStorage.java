@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -28,11 +30,12 @@ public class ReviewDbStorage implements ReviewStorage {
     @Override
     public Review add(Review review) {
         negativeUserOrFilmCheck(review);
-        createId(review);
-        String sql = "INSERT INTO review (review_id, content, isPositive, user_id, film_id, useful) " +
-                "VALUES (:id, :content, :isPositive, :userId, :filmId, :useful)";
+        String sql = "INSERT INTO review (content, isPositive, user_id, film_id, useful) " +
+                "VALUES (:content, :isPositive, :userId, :filmId, :useful)";
         SqlParameterSource parameterSource = getParameterSource(review);
-        namedParameterJdbcTemplate.update(sql, parameterSource);
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        namedParameterJdbcTemplate.update(sql, parameterSource, keyHolder);
+        review.setReviewId((long) keyHolder.getKey());
         return review;
     }
 
@@ -61,7 +64,6 @@ public class ReviewDbStorage implements ReviewStorage {
     @Override
     public void delete(long reviewId) {
         checkReviewById(reviewId);
-        Review review = getById(reviewId);
         String sql = "DELETE FROM review WHERE review_id = :id";
         SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("id", reviewId);
         namedParameterJdbcTemplate.update(sql, parameterSource);

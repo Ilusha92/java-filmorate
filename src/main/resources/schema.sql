@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS friendship (
 );
 
 CREATE TABLE IF NOT EXISTS review (
-    review_id LONG PRIMARY KEY,
+    review_id LONG GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     content varchar NOT NULL CHECK (content <> ' '),
     isPositive boolean NOT NULL,
     user_id LONG REFERENCES users (userId),
@@ -67,10 +67,10 @@ CREATE TABLE IF NOT EXISTS review (
 );
 
 CREATE TABLE IF NOT EXISTS review_likes (
-    id LONG GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id LONG REFERENCES users (userId) ON DELETE CASCADE,
     review_id LONG REFERENCES review (review_id) ON DELETE CASCADE,
-    isLike BOOLEAN NOT NULL
+    isLike BOOLEAN NOT NULL,
+    PRIMARY KEY (user_id, review_id)
 );
 
 
