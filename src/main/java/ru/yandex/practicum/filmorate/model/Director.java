@@ -2,14 +2,11 @@ package ru.yandex.practicum.filmorate.model;
 
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
-public class Mpa {
+public class Director {
     private Integer id;
     private String name;
-
-    public Mpa(Integer id, String name) {
-        this.id = id;
-        this.name = name;
-
-    }
+    private Set<Film> films;
 }

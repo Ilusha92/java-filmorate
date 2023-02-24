@@ -1,51 +1,71 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventTypes;
+import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FilmServiceManager implements FilmService {
 
     private final FilmStorage filmStorage;
-    private final UserStorage userStorage;
+    private final UserService userService;
+    private final EventDbStorage eventDbStorage;
+    private final GenreService genreService;
+    private final DirectorService directorService;
 
-    @Autowired
-    public FilmServiceManager(@Qualifier("filmDBStorage") FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        List<Film> resultList  = filmStorage.getCommonFilms(userId, friendId);
+        resultList.sort(Comparator.comparingInt(Film::getLikesCount).reversed());
+        return setGenresOfFilmList(resultList);
     }
 
     @Override
     public List<Film> getAllFilms() {
-        return filmStorage.getAllFilms();
+        List<Film> films = filmStorage.getAllFilms();
+        return setGenresOfFilmList(films);
+    }
+
+    private List<Film> setGenresOfFilmList(List<Film> films) {
+        Map<Integer, Set<Genre>> allGenresOfAllFilms = genreService.getAllGenresOfAllFilms();
+        for (Film film : films) {
+            film.setGenres(allGenresOfAllFilms.get(film.getId()));
+            if (film.getGenres() == null) {
+                film.setGenres(new HashSet<>());
+            }
+        }
+        return films;
     }
 
     @Override
-    public Film getFilmById(int id) {
-        return filmStorage.getFilmById(id);
+    public Film getFilmById(int filmId) {
+        Film film = filmStorage.getFilmById(filmId);
+        film.setGenres(genreService.getGenresByFilmId(filmId));
+
+        return film;
     }
 
     @Override
     public Film createFilm(Film film) {
-        return filmStorage.createFilm(film);
+        filmStorage.createFilm(film);
+        film.setGenres(genreService.getGenresByFilmId(film.getId()));
+        return film;
     }
 
     @Override
     public Film updateFilm(Film film) {
-        return filmStorage.updateFilm(film);
+        filmStorage.updateFilm(film);
+        film.setGenres(genreService.getGenresByFilmId(film.getId()));
+        return film;
     }
 
     @Override
@@ -55,37 +75,46 @@ public class FilmServiceManager implements FilmService {
 
     @Override
     public Film likeFilm(int filmId, int userId) {
-       return filmStorage.likeFilm(filmId, userId);
+        userService.checkUserInDb(userId);
+        Film film = filmStorage.likeFilm(filmId, userId);
+        eventDbStorage.saveEvent(userId, EventTypes.LIKE, OperationTypes.ADD, filmId);
+        return film;
     }
 
     @Override
     public Film deleteLikeFromFilm(int filmId, int userId) {
-        return filmStorage.deleteLikeFromFilm(filmId, userId);
+        userService.checkUserInDb(userId);
+        Film film = filmStorage.deleteLikeFromFilm(filmId, userId);
+        film.setGenres(genreService.getGenresByFilmId(filmId));
+        eventDbStorage.saveEvent(userId, EventTypes.LIKE, OperationTypes.REMOVE, filmId);
+        return film;
     }
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        return filmStorage.getPopularFilms(count);
+        return setGenresOfFilmList(filmStorage.getPopularFilms(count));
     }
 
     @Override
-    public List<Genre> getAllGenres() {
-        return filmStorage.getAllGenres();
+    public List<Film> searchFilms(String query, List<String> by) {
+        List<Film> resultList  = filmStorage.searchFilms(query, by);
+        resultList.sort(Comparator.comparingInt(Film::getLikesCount).reversed());
+        return setGenresOfFilmList(resultList);
     }
 
     @Override
-    public Genre getGenreById(int id) {
-        return filmStorage.getGenreById(id);
-    }
+    public List<Film> getFilmsSortedByLikesOrYear(Integer directorId, String param) {
+        List<Film> filmsByDirectorId = directorService.findFilmsByDirectorId(directorId);
+        setGenresOfFilmList(filmsByDirectorId);
 
-    @Override
-    public List<Mpa> getAllMpa() {
-        return filmStorage.getAllMpa();
-    }
+        if ("year".equalsIgnoreCase(param)) {
+            return filmsByDirectorId
+                    .stream().sorted(Comparator.comparing(Film::getReleaseDate)).collect(Collectors.toList());
+        }
+        else  if ("likes".equalsIgnoreCase(param)) {
+            return filmsByDirectorId.stream().sorted(Comparator.comparing(film -> film.getLikes().size())).collect(Collectors.toList());
+        }
 
-    @Override
-    public Mpa getMpaById(int id) {
-        return filmStorage.getMpaById(id);
+        return filmsByDirectorId;
     }
-
 }

@@ -3,9 +3,11 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Data;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -25,6 +27,7 @@ public class Film {
     private Set<Integer> likes = new LinkedHashSet<>();
     private Set<Genre> genres = new LinkedHashSet<>();
     private Mpa mpa;
+    private Set<Director> directors= new LinkedHashSet<>();
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
@@ -33,16 +36,16 @@ public class Film {
         this.duration = duration;
     }
 
-    public void addLIke(Integer userId){
+    public void addLike(Integer userId){
         likes.add(userId);
     }
 
-    public void removeLike(Integer userId){
+    public void removeLike(Integer userId) {
         if (likes.contains(userId)){
             likes.remove(userId);
-        }else{
-            throw new NotFoundObjectException("Лайк от пользователя "+userId+" этому фильму и так не был поставлен, " +
-                    "удалять нечего");
+        } else {
+            throw new NotFoundObjectException("Лайк от пользователя " + userId +
+                    " этому фильму и так не был поставлен, удалять нечего");
         }
     }
 
@@ -50,4 +53,7 @@ public class Film {
         genres.add(genre);
     }
 
+    public Integer getLikesCount(){
+        return likes.size();
+    }
 }

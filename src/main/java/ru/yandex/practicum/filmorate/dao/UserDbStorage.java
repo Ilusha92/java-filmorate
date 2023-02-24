@@ -1,39 +1,40 @@
 package ru.yandex.practicum.filmorate.dao;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Component("userDBStorage")
+@RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
 
-    private static int userId = 0;
     private final JdbcTemplate jdbcTemplate;
+    private final FilmMapper filmMapper;
+    private final UserMapper userMapper;
 
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    private int generateUserId() {
-        return ++userId;
-    }
 
     @Override
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users";
-        return jdbcTemplate.query(sql, new UserMapper(jdbcTemplate, this));
+        return jdbcTemplate.query(sql, userMapper);
     }
 
     @Override
@@ -48,17 +49,21 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User createUser(User user) {
-        user.setId(generateUserId());
-        if ((user.getName()==null)||(user.getName().isBlank())) {
-            log.info("Поле \"Имя\" пустое, ему будет присвоено значение поля \"Логин\"");
-            user.setName(user.getLogin());
-        }
-        jdbcTemplate.update("INSERT INTO users(userId, email, login, name, birthdate) VALUES (?,?,?,?,?)",
-                user.getId(),
-                user.getEmail(),
-                user.getLogin(),
-                user.getName(),
-                user.getBirthday());
+        String sql = "INSERT INTO users (NAME, EMAIL, LOGIN, BIRTHDATE) VALUES (?, ?, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql,
+                    new String[]{"userid"});
+            ps.setString(1, user.getName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getLogin());
+            ps.setDate(4, java.sql.Date.valueOf(user.getBirthday()));
+            return ps;
+        }, keyHolder);
+        int generatedId = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        user.setId(generatedId);
         return user;
     }
 
@@ -76,8 +81,12 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User deleteUserById(int userId) {
-        return null;
+    public void deleteUserById(int userId) {
+        if(checkUserInDb(userId)) {
+            jdbcTemplate.update("DELETE FROM users where userId = ?", userId);
+        } else {
+            throw new NotFoundObjectException("Пользователь с userId " + userId + " не был удален.");
+        }
     }
 
     @Override
@@ -96,7 +105,7 @@ public class UserDbStorage implements UserStorage {
                 jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='apply'",
                                 Integer.class), friendId, userId);
-            }else{
+            } else {
                 jdbcTemplate.update("INSERT INTO friendship VALUES (?,?,?)", userId, friendId,
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
                                 Integer.class));
@@ -110,9 +119,11 @@ public class UserDbStorage implements UserStorage {
         List<Integer> friends = new ArrayList<>();
         SqlRowSet checkFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship " +
                 "WHERE userId=?", userId);
+
         while(checkFriends.next()){
             friends.add(checkFriends.getInt("friendId"));
         }
+
         if(friends.contains(userId)){
             jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                     jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
@@ -123,7 +134,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getFriends(int id) {
-        if(checkUserInDb(id)){
+        if(checkUserInDb(id)) {
             List<User> userFriends = new ArrayList<>();
             SqlRowSet getFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship WHERE userId=?",
                     id);
@@ -131,15 +142,14 @@ public class UserDbStorage implements UserStorage {
                 userFriends.add(getUserById(getFriends.getInt("friendId")));
             }
             return userFriends;
-        }else{
+        } else {
             return null;
         }
     }
 
-
     @Override
     public List<User> getCommonFriends(int userId, int otherId) {
-        if(checkUserInDb(userId)){
+        if(checkUserInDb(userId)) {
             List<User> userFriends = new ArrayList<>();
             SqlRowSet getFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship WHERE userId=?",
                     userId);
@@ -147,23 +157,35 @@ public class UserDbStorage implements UserStorage {
                 userFriends.add(getUserById(getFriends.getInt("friendId")));
             }
             return userFriends;
-        }else{
+        } else {
             return null;
         }
     }
 
-    private boolean checkUserInDb(Integer id){
-        String sql = "SELECT userId FROM users";
-        SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql);
-        List<Integer> ids = new ArrayList<>();
-        while (getUsersFromDb.next()){
-            ids.add(getUsersFromDb.getInt("userId"));
+    @Override
+    public List<Film> getRecommendedFilms(int id) {
+        String sql = "SELECT FILMID, NAME, DESCRIPTION, RELEASE_DATE, DURATION, MPAID FROM FILMS as f JOIN " +
+                "(SELECT FILMID as recommended FROM LIKESLIST " +
+                "WHERE USERID  = (SELECT USERID FROM LIKESLIST " +
+                "    WHERE FILMID IN (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +") " +
+                "    AND USERID <> " + id +
+                "    GROUP BY USERID " +
+                "    ORDER BY count(USERID) DESC " +
+                "    LIMIT 1) " +
+                "AND FILMID NOT IN " +
+                "    (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +")) as Lr " +
+                "ON f.FILMID = recommended";
+
+        return jdbcTemplate.query(sql, filmMapper);
+    }
+
+    public boolean checkUserInDb(Integer id) {
+        String sql = "SELECT userId FROM users where USERID =?";
+        SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql, id);
+        if (!getUsersFromDb.next()) {
+            throw new NotFoundObjectException("Пользователя с id" + id + " нет в базе!");
         }
-        if(ids.contains(id)){
-            return true;
-        }else{
-            throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
-        }
+        return true;
     }
 
     private User makeUser(ResultSet rs) throws SQLException {
