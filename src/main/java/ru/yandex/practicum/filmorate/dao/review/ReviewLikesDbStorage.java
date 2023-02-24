@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.dao.review;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,17 +19,25 @@ import java.util.stream.Collectors;
 
 @Repository("reviewLikesDbStorage")
 @RequiredArgsConstructor
+@Slf4j
 public class ReviewLikesDbStorage implements ReviewLikesStorage {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final JdbcTemplate jdbcTemplate;
 
+    @Data
+    @AllArgsConstructor
+    private class ReviewLikesRow {
+        private long userId;
+        private boolean isLike;
+    }
+
     @Override
     public void add(Review review) {
         Map<Long, Boolean> likes = review.getLikes();
-
         if (likes.size() > 0) {
             String sql = getInsertSql(likes, review);
             jdbcTemplate.update(sql);
+            log.info("Лайк для отзыва " + review.getReviewId() + " добавлен");
         }
     }
 
@@ -40,6 +49,7 @@ public class ReviewLikesDbStorage implements ReviewLikesStorage {
             String sql = getInsertSql(reviewLikes, review);
             delete(review.getReviewId());
             jdbcTemplate.update(sql);
+            log.info("Лайк для отзыва " + review.getReviewId() + " обновлен");
         }
     }
 
@@ -48,6 +58,7 @@ public class ReviewLikesDbStorage implements ReviewLikesStorage {
         String sql = "DELETE FROM review_likes WHERE review_id = :id";
         SqlParameterSource parameterSource = new MapSqlParameterSource().addValue("id", reviewId);
         namedParameterJdbcTemplate.update(sql, parameterSource);
+        log.info("Лайк для отзыва " + reviewId + " удален");
     }
 
     @Override
@@ -61,6 +72,7 @@ public class ReviewLikesDbStorage implements ReviewLikesStorage {
             likesRow.forEach(reviewLikesRow ->
                     reviewLikes.put(reviewLikesRow.getUserId(), reviewLikesRow.isLike()));
         }
+        log.info("Список лайков для отзыва " + reviewId + " отправлен");
         return reviewLikes;
     }
 
@@ -75,6 +87,7 @@ public class ReviewLikesDbStorage implements ReviewLikesStorage {
             likesRow.forEach(reviewLikesRow ->
                     reviewLikes.put(reviewLikesRow.getUserId(), reviewLikesRow.isLike()));
         }
+        log.info("Список всех лайков отправлен");
         return reviewLikes;
     }
 
@@ -85,12 +98,5 @@ public class ReviewLikesDbStorage implements ReviewLikesStorage {
         reviewLikes.forEach((userId, isLike) -> sql.append(String.format("(%d, %d, %b), ", userId, reviewId, isLike)));
         sql.setLength(sql.length() - commaAndSpace);
         return sql.toString();
-    }
-
-    @Data
-    @AllArgsConstructor
-    private class ReviewLikesRow {
-        private long userId;
-        private boolean isLike;
     }
 }

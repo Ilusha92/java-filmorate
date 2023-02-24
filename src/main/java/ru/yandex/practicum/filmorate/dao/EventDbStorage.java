@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.mappers.EventMapper;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EventDbStorage {
     private final JdbcTemplate jdbcTemplate;
 
@@ -23,12 +25,15 @@ public class EventDbStorage {
         Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
         jdbcTemplate.update("INSERT INTO events(TIMESTAMP, USERID, EVENTTYPE, OPERATION, ENTITYID) VALUES (?,?,?,?,?)",
                 timestamp.getTime() , userId, eventType.name(), operation.name(), entityId);
+        log.info("Событие для пользователя " + userId + " сохранено");
     }
 
     public List<Event> getEvent(int id) {
         if (!jdbcTemplate.queryForRowSet("SELECT USERID FROM USERS WHERE USERID =?", id).next()) {
+            log.warn("Пользователь " + id + " не найден");
          throw new NotFoundObjectException("User with id " + id + " not found");
         }
+        log.info("Список событий для пользователя " + id + " отправлен");
         return jdbcTemplate.queryForStream("SELECT * " +
                 "FROM EVENTS " +
                 "WHERE USERID = ?;", (rs, rowNum) ->

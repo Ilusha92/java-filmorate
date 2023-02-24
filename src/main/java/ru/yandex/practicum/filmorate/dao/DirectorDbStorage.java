@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dao;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DirectorDbStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
     private final FilmMapper filmMapper;
@@ -30,12 +32,14 @@ public class DirectorDbStorage implements DirectorStorage {
         String statement = "SELECT * FROM directors";
         List<Director> directors = jdbcTemplate.query(statement, new DirectorMapper());
         directors.forEach(director -> director.setFilms(new HashSet<>(findFilmsByDirectorId(director.getId()))));
+        log.info("Список директоров отправлен");
         return directors;
     }
 
     @Override
     public Director create(Director director) {
         if(director.getName() == null || director.getName().isBlank()) {
+            log.warn("Имя директора отсутствует");
             throw  new ValidationException("Name is required");
         }
         String statement = "INSERT INTO directors (directorName) VALUES (?)";
@@ -58,6 +62,7 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     public Director update(Director director) {
         if (director.getId() == null) {
+            log.warn("Обьект директора = null");
             throw new NotFoundObjectException("Director id is null");
         }
         if (! isExists(director.getId())) {
@@ -71,6 +76,7 @@ public class DirectorDbStorage implements DirectorStorage {
         if (director.getFilms() != null) {
             updateFilmsForDirector(director.getId(), director.getFilms());
         }
+
         return findById(director.getId());
     }
 
@@ -126,7 +132,7 @@ public class DirectorDbStorage implements DirectorStorage {
         jdbcTemplate.update(updateStatment.toString());
     }
 
-    public boolean isExists(Integer id) {
+    private boolean isExists(Integer id) {
         String s   = "SELECT COUNT(*) FROM directors WHERE directorId=?";
         Long   obj = jdbcTemplate.queryForObject(s, Long.class, id);
         if (obj != null) {
