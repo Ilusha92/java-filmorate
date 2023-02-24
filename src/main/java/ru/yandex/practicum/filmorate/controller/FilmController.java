@@ -35,6 +35,7 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film getFilm(@PathVariable int id) {
+        log.info("Get Film {}", id);
         return filmService.getFilmById(id);
     }
 
@@ -59,32 +60,33 @@ public class FilmController {
 
     @GetMapping("/popular")
     public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        log.info("Получен запрос на список популярных фильмов");
         return filmService.getPopularFilms(count);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Film likeFilm(
-            @PathVariable int id,
-            @PathVariable int userId) {
+    public Film likeFilm(@PathVariable int id, @PathVariable int userId) {
+        log.info("Получен запрос на добавление лайка фильму id " + id + " юзером " + userId);
         return filmService.likeFilm(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Film deleteLikeFromFilm(
-            @PathVariable int id,
-            @PathVariable int userId) {
+    public Film deleteLikeFromFilm(@PathVariable int id, @PathVariable int userId) {
+        log.info("Получен запрос на удаление лайка фильму id " + id + " юзером " + userId);
         return filmService.deleteLikeFromFilm(id, userId);
     }
 
     @GetMapping ("director/{directorId}")
     public List<Film> getFilmsByDirectorId (@PathVariable Integer directorId,
                                             @RequestParam (value = "sortBy")String param) {
+        log.info("Получен запрос на получение");
       return directorService.getFilmsSortedByLikesOrYear(directorId, param);
     }
 
     @GetMapping("/search")
     public List<Film> searchFilms(@RequestParam @NotNull @NotBlank String query,
                                   @RequestParam @NotNull @NotBlank List<String> by) {
+        log.info("Получен запрос на поиск фильмов");
         return filmService.searchFilms(query, by);
     }
 }

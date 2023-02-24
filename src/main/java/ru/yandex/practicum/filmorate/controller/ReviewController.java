@@ -45,9 +45,8 @@ public class ReviewController {
     }
 
     @GetMapping
-    public List<Review> getReviewsByFilmId(
-            @RequestParam(required = false) Long filmId,
-            @RequestParam(defaultValue = "10") Integer count) {
+    public List<Review> getReviewsByFilmId(@RequestParam(required = false) Long filmId,
+                                           @RequestParam(defaultValue = "10") Integer count) {
         List<Review> reviews;
         if (filmId == null) {
             reviews = service.getAllReviews();
@@ -60,9 +59,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public Review addLike(
-            @PathVariable("id") Long reviewId,
-            @PathVariable Long userId) {
+    public Review addLike(@PathVariable("id") Long reviewId, @PathVariable Long userId) {
         Review review = service.addLike(reviewId, userId);
         log.info("Лайк отзыв с ID #{} пользователя c ID #{} добавлен. Количество лайков отзыва {}",
                 reviewId, userId, review.getUseful());
@@ -70,9 +67,7 @@ public class ReviewController {
     }
 
     @PutMapping("/{id}/dislike/{userId}")
-    public Review addDislike(
-            @PathVariable("id") Long reviewId,
-            @PathVariable Long userId) {
+    public Review addDislike(@PathVariable("id") Long reviewId, @PathVariable Long userId) {
         Review review = service.addDislike(reviewId, userId);
         log.info("Дизлайк отзыва с ID #{} пользователя c ID #{} добавлен. Количество лайков отзыва {}",
                 reviewId, userId, review.getUseful());
@@ -80,9 +75,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public Review deleteLike(
-            @PathVariable("id") Long reviewId,
-            @PathVariable Long userId) {
+    public Review deleteLike(@PathVariable("id") Long reviewId, @PathVariable Long userId) {
         Review review = service.deleteLike(reviewId, userId);
         log.info("Лайк отзыва с ID #{} пользователя c ID #{} удален. Количество лайков отзыва {}",
                 reviewId, userId, review.getUseful());
@@ -90,9 +83,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}/dislike/{userId}")
-    public Review deleteDislike(
-            @PathVariable("id") Long reviewId,
-            @PathVariable Long userId) {
+    public Review deleteDislike(@PathVariable("id") Long reviewId, @PathVariable Long userId) {
         Review review = service.deleteDislike(reviewId, userId);
         log.info("Дизлайк отзыва с ID #{} пользователя c ID #{} удален. Количество лайков отзыва {}",
                 reviewId, userId, review.getUseful());

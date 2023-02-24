@@ -43,6 +43,7 @@ public class ReviewDbStorage implements ReviewStorage {
         reviewLikesStorage.add(review);
         eventDbStorage.saveEvent(review.getUserId(), EventTypes.REVIEW,
                                     OperationTypes.ADD, review.getReviewId());
+        log.info("Отзыв " + review.getReviewId() + " добавлен");
         return review;
     }
 
@@ -59,6 +60,7 @@ public class ReviewDbStorage implements ReviewStorage {
         namedParameterJdbcTemplate.update(sql, parameterSource);
         eventDbStorage.saveEvent(userId, EventTypes.REVIEW,
                 OperationTypes.UPDATE, review.getReviewId());
+        log.info("Отзыв " + review.getReviewId() + " обновлен");
         return getById(review.getReviewId());
     }
 
@@ -83,6 +85,7 @@ public class ReviewDbStorage implements ReviewStorage {
         reviewLikesStorage.delete(reviewId);
         eventDbStorage.saveEvent(Math.toIntExact(review.getUserId()), EventTypes.REVIEW,
                 OperationTypes.REMOVE, Math.toIntExact(review.getReviewId()));
+        log.info("Отзыв " + review.getReviewId() + " удален");
     }
 
     @Override
@@ -92,6 +95,7 @@ public class ReviewDbStorage implements ReviewStorage {
         Review review = jdbcTemplate.queryForObject(sql, this::getRowMapper, reviewId);
 
         review.getLikes().putAll(reviewLikesStorage.getReviewLikesById(review.getReviewId()));
+        log.info("Отзыв " + review.getReviewId() + " отправлен");
         return review;
     }
 
@@ -102,12 +106,14 @@ public class ReviewDbStorage implements ReviewStorage {
         SqlParameterSource parameterSource = new MapSqlParameterSource()
                 .addValue("filmId", filmId)
                 .addValue("limit", limit);
+        log.info("Список отзывов к фильму " + filmId + " отправлен");
         return readReviews(sql, parameterSource);
     }
     @Override
     public List<Review> getAllReviews() {
         String sql = "SELECT * FROM review ORDER BY useful DESC";
         SqlParameterSource parameterSource = new BeanPropertySqlParameterSource(Review.class);
+        log.info("Список всех отзывов отпрален");
         return readReviews(sql, parameterSource);
     }
 

@@ -48,6 +48,7 @@ public class FilmDbStorage implements FilmStorage {
         if (films != null) {
             films.forEach(film -> film.setDirectors(new HashSet<>(getDirectorByFilmId(film.getId()))));
         }
+        log.info("Список всех фильмов отправлен");
         return films;
     }
 
@@ -60,7 +61,7 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE A.FILMID = B.FILMID AND A.USERID <> B.USERID) as common " +
                 "ON f.FILMID = common.FI " +
                 "WHERE (AU = " + userId + " AND BU = " + friendId + ")";
-
+        log.info("Список общих фильмов между пользователями " + userId + " и " + friendId + " отправлен");
         return jdbcTemplate.query(sql2, new FilmMapper(jdbcTemplate, this));
     }
 
@@ -69,19 +70,19 @@ public class FilmDbStorage implements FilmStorage {
         String sql = "SELECT * FROM films WHERE filmId="+id;
         if (checkFilmInDb(id)){
             Film film = jdbcTemplate.query(sql, this::makeFilm);
-            if (film != null) {
                 film.setDirectors(new HashSet<>(getDirectorByFilmId(id)));
-            }
+            log.info("Фильм с id " + id + " отправлен");
             return film;
         } else {
-            return null;
+            log.warn("Фильм с id " + id + " не ннайден");
+            throw new NotFoundObjectException("Фильм с id " + id + " не ннайден");
         }
     }
 
     @Override
     public Film createFilm(Film film) {
         if (film.getReleaseDate().isBefore(FILM_START_DATE)) {
-            log.info("Не пройдена валидация даты выпуска фильма. Так рано фильмы не снимали!");
+            log.warn("Не пройдена валидация даты выпуска фильма. Так рано фильмы не снимали!");
             throw new ValidationException("Так рано фильмы не снимали!");
         } else {
             film.setId(generateFilmId());
@@ -105,6 +106,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDirectors().forEach(d-> jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), d.getId()));
             }
         }
+        log.info("Фильм с id " + film.getId() + " сохранен");
         return getFilmById(film.getId());
     }
 
@@ -133,6 +135,7 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDirectors().forEach(d-> jdbcTemplate.update("INSERT INTO directorFilm (filmId, directorId) VALUES (?, ?)", film.getId(), d.getId()));
             }
         }
+        log.info("Фильм с id " + film.getId() + " обновлен");
         return getFilmById(film.getId());
     }
 
@@ -145,7 +148,7 @@ public class FilmDbStorage implements FilmStorage {
             log.info("Фильм с filmId " + filmId + " был удален.");
             jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", filmId);
         } else {
-            log.info("Фильм с filmId " + filmId + " не был удален.");
+            log.warn("Фильм с filmId " + filmId + " не был удален.");
             throw new NotFoundObjectException("Фильм с filmId " + filmId + " не был удален.");
         }
     }
@@ -156,6 +159,7 @@ public class FilmDbStorage implements FilmStorage {
         checkUserInDb(userId);
         jdbcTemplate.update("INSERT INTO likesList VALUES (?,?)", filmId, userId);
         eventDbStorage.saveEvent(userId, EventTypes.LIKE, OperationTypes.ADD, filmId);
+        log.info("Лайк для фильма " + filmId + " пользователем" + userId + " добавлен");
         return getFilmById(filmId);
     }
 
@@ -165,6 +169,7 @@ public class FilmDbStorage implements FilmStorage {
         checkUserInDb(userId);
         jdbcTemplate.update("DELETE FROM likesList WHERE filmId=? AND userId=?", filmId, userId);
         eventDbStorage.saveEvent(userId, EventTypes.LIKE, OperationTypes.REMOVE, filmId);
+        log.info("Лайк для фильма " + filmId + " пользователем" + userId + " удален");
         return getFilmById(filmId);
     }
 
@@ -176,6 +181,7 @@ public class FilmDbStorage implements FilmStorage {
         if (films != null) {
             films.forEach(film -> film.setDirectors(new HashSet<>(getDirectorByFilmId(film.getId()))));
         }
+        log.info("Список популярных фильмов длинной " + count + " отправлен");
         return films;
     }
 
@@ -187,6 +193,7 @@ public class FilmDbStorage implements FilmStorage {
             Genre genre = new Genre(allGenres.getInt("genreId"), allGenres.getString("name"));
             genres.add(genre);
         }
+        log.info("Список всех жанров отправлен");
         return genres;
     }
 
@@ -200,8 +207,8 @@ public class FilmDbStorage implements FilmStorage {
             log.info("Жанр с id={}, это {}.", genre.getId(), genre.getName());
             return genre;
         } else {
-            log.info("Жанра с таким id нет!");
-            return null;
+            log.warn("Жанра с id " + id+ " нет!");
+            throw  new NotFoundObjectException("Жанра с id " + id+ " нет!");
         }
     }
 
@@ -213,6 +220,7 @@ public class FilmDbStorage implements FilmStorage {
             Mpa mpa = new Mpa(allMpas.getInt("mpaId"), allMpas.getString("name"));
             mpas.add(mpa);
         }
+        log.info("Список всех рейтингов отправлен");
         return mpas;
     }
 
@@ -224,7 +232,6 @@ public class FilmDbStorage implements FilmStorage {
             log.info("Рейтинг с id={}, это {}.", mpa.getId(), mpa.getName());
             return mpa;
         } else {
-            log.info("Рейтинга с таким id нет!");
             return null;
         }
     }
@@ -239,6 +246,7 @@ public class FilmDbStorage implements FilmStorage {
         if (ids.contains(id)) {
             return true;
         } else {
+            log.warn("Рейтинга с id " + id + "нет!");
             throw new MpaNotFoundException("Рейтинга с таким id нет в базе!");
         }
     }
@@ -279,7 +287,6 @@ public class FilmDbStorage implements FilmStorage {
         } else {
             return null;
         }
-
     }
 
     private boolean checkGenreInDb(Integer id) {
@@ -308,9 +315,8 @@ public class FilmDbStorage implements FilmStorage {
         } else {
             throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
         }
-
-
     }
+
     private List<Director> getDirectorByFilmId (Integer filmId) {
         String statement = "SELECT directorFilm.filmId, directors.directorId, directors.directorName " +
                 "FROM directorFilm LEFT JOIN directors " +
