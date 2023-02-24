@@ -20,7 +20,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 @Slf4j
 @Component("userDBStorage")
@@ -180,7 +179,7 @@ public class UserDbStorage implements UserStorage {
         return jdbcTemplate.query(sql, filmMapper);
     }
 
-    private boolean checkUserInDb(Integer id) {
+    public boolean checkUserInDb(Integer id) {
         String sql = "SELECT userId FROM users where USERID =?";
         SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql, id);
         if (!getUsersFromDb.next()) {

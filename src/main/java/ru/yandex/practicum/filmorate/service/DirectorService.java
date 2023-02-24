@@ -11,5 +11,5 @@ public interface DirectorService {
     Director getById (Integer id);
     Director delete (Integer id);
     List<Director> getAll ();
-    List<Film> getFilmsSortedByLikesOrYear (Integer id, String param);
+    List<Film> findFilmsByDirectorId (Integer directorId);
 }

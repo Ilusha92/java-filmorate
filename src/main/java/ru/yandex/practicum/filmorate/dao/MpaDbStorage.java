@@ -37,19 +37,18 @@ public class MpaDbStorage implements MpaStorage {
         checkMpaInDb(id);
         SqlRowSet mpaRows = jdbcTemplate.queryForRowSet("SELECT * FROM mpa WHERE mpaId = ?", id);
         if (mpaRows.next()) {
-            Mpa mpa = new Mpa(mpaRows.getInt("mpaId"), mpaRows.getString("name"));
-            return mpa;
+            return new Mpa(mpaRows.getInt("mpaId"), mpaRows.getString("name"));
         } else {
             return null;
         }
     }
 
     @Override
-    public Map<Integer, String> getMpaIdNamesMap() {
-        Map<Integer, String> mpaIdNamesMap = new HashMap<>();
+    public Map<Integer, Mpa> getMpasMap() {
+        Map<Integer, Mpa> mpaIdNamesMap = new HashMap<>();
         List<Mpa> mpas = getAllMpa();
         for (Mpa mpa : mpas) {
-            mpaIdNamesMap.put(mpa.getId(), mpa.getName());
+            mpaIdNamesMap.put(mpa.getId(), mpa);
         }
         return mpaIdNamesMap;
     }

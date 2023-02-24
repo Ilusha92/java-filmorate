@@ -16,4 +16,5 @@ public interface FilmService {
     List<Film> getPopularFilms(int count);
     List <Film> searchFilms(String query, List<String> by);
     List<Film> getCommonFilms(int userId, int friendId);
+    List<Film> getFilmsSortedByLikesOrYear(Integer directorId, String param);
 }

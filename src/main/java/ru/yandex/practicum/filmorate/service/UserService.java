@@ -19,4 +19,5 @@ public interface UserService {
     List<User> getCommonFriends(int userId, int otherId);
     List<Film> getRecommendedFilms(int id);
     List<Event>  getEvents(int id);
+    boolean checkUserInDb(Integer userId);
 }

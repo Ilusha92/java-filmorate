@@ -13,5 +13,6 @@ public interface GenreStorage {
 
     Set<Genre> getGenresByFilmId(int filmId);
 
-    Map<Integer, String> getGenreIdNamesMap();
+    Map<Integer, Genre> getGenresMap();
+    Map<Integer, Set<Genre>> getAllGenresOfAllFilms();
 }

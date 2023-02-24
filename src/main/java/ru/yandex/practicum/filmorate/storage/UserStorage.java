@@ -17,4 +17,5 @@ public interface UserStorage {
     List<User> getFriends(int id);
     List<User> getCommonFriends(int userId, int otherId);
     List<Film> getRecommendedFilms(int id);
+    boolean checkUserInDb(Integer userId);
 }

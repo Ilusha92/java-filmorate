@@ -14,16 +14,11 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.service.MpaService;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.PreparedStatement;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Component("filmDBStorage")
@@ -163,7 +158,6 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film likeFilm(int filmId, int userId) {
         checkFilmInDb(filmId);
-        checkUserInDb(userId);
         jdbcTemplate.update("INSERT INTO likesList VALUES (?,?)", filmId, userId);
         return getFilmById(filmId);
     }
@@ -171,7 +165,6 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public Film deleteLikeFromFilm(int filmId, int userId) {
         checkFilmInDb(filmId);
-        checkUserInDb(userId);
         jdbcTemplate.update("DELETE FROM likesList WHERE filmId=? AND userId=?", filmId, userId);
         return getFilmById(filmId);
     }
@@ -188,30 +181,12 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private boolean checkFilmInDb(Integer id) {
-        String sql = "SELECT filmId FROM films";
-        SqlRowSet getFilmFromDb = jdbcTemplate.queryForRowSet(sql);
-        List<Integer> ids = new ArrayList<>();
-        while (getFilmFromDb.next()) {
-            ids.add(getFilmFromDb.getInt("filmId"));
-        }
-        if (ids.contains(id)) {
+        String sql = "SELECT filmId FROM films where filmId =?";
+        SqlRowSet getFilmFromDb = jdbcTemplate.queryForRowSet(sql, id);
+        if (getFilmFromDb.next()) {
             return true;
         } else {
             throw new NotFoundObjectException("Фильма с таким id нет в базе!");
-        }
-    }
-
-    private boolean checkUserInDb(Integer id) {
-        String sql = "SELECT userId FROM users";
-        SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql);
-        List<Integer> ids = new ArrayList<>();
-        while (getUsersFromDb.next()) {
-            ids.add(getUsersFromDb.getInt("userId"));
-        }
-        if (ids.contains(id)) {
-            return true;
-        } else {
-            throw new NotFoundObjectException("Пользователя с таким id нет в базе!");
         }
     }
 
