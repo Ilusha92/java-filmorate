@@ -2,7 +2,11 @@ package ru.yandex.practicum.filmorate.service.review;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.EventDbStorage;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventTypes;
+import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
+import ru.yandex.practicum.filmorate.storage.review.ReviewLikesStorage;
 import ru.yandex.practicum.filmorate.storage.review.ReviewStorage;
 
 import javax.validation.ValidationException;
@@ -14,35 +18,51 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
     private final ReviewStorage reviewStorage;
+    private final ReviewLikesStorage reviewLikesStorage;
+    private final EventDbStorage eventDbStorage;
 
     @Override
     public Review add(Review review) {
-        return reviewStorage.add(review);
+        review = reviewStorage.add(review);
+        reviewLikesStorage.add(review);
+        eventDbStorage.saveEvent(review.getUserId(), EventTypes.REVIEW,
+                OperationTypes.ADD, review.getReviewId());
+        return review;
     }
 
     @Override
     public Review update(Review review) {
-        return reviewStorage.update(review);
+        review = reviewStorage.update(review);
+        eventDbStorage.saveEvent(review.getUserId(), EventTypes.REVIEW,
+                OperationTypes.UPDATE, review.getReviewId());
+        return review;
     }
 
     @Override
     public void delete(long reviewId) {
         reviewStorage.delete(reviewId);
+        reviewLikesStorage.delete(reviewId);
+        eventDbStorage.saveEvent(Math.toIntExact(reviewId), EventTypes.REVIEW,
+                OperationTypes.REMOVE, Math.toIntExact(reviewId));
     }
 
     @Override
     public Review getById(long reviewId) {
-        return reviewStorage.getById(reviewId);
+        Review review = reviewStorage.getById(reviewId);
+        review.getLikes().putAll(reviewLikesStorage.getReviewLikesById(review.getReviewId()));
+        return review;
     }
 
     @Override
     public List<Review> getAllReviewsByFilmId(long filmId, int limit) {
-        return reviewStorage.getAllReviewsByFilmId(filmId, limit);
+        List<Review> reviews = reviewStorage.getAllReviewsByFilmId(filmId, limit);
+        return getReviewWithLikes(reviews);
     }
 
     @Override
     public List<Review> getAllReviews() {
-        return reviewStorage.getAllReviews();
+        List<Review> reviews = reviewStorage.getAllReviews();
+        return getReviewWithLikes(reviews);
     }
 
     @Override
@@ -112,6 +132,19 @@ public class ReviewServiceImpl implements ReviewService {
     private void updateReviewLikes(Review review, Map<Long, Boolean> reviewLikes) {
         review.getLikes().putAll(reviewLikes);
         setNewUseful(review);
-        reviewStorage.updateUseful(review);
+        review = reviewStorage.updateUseful(review);
+        reviewLikesStorage.update(review);
+    }
+
+    private List<Review> getReviewWithLikes(List<Review> reviews) {
+        if (reviews.size() > 0) {
+            Map<Long, Boolean> reviewsLikes = reviewLikesStorage.getAllReviewLikes();
+            if (reviewsLikes.size() > 0) {
+                reviews.forEach(review -> reviewsLikes.forEach((userId, like) -> {
+                    if (review.getUserId().equals(userId)) review.getLikes().put(userId, like);
+                }));
+            }
+        }
+        return reviews;
     }
 }

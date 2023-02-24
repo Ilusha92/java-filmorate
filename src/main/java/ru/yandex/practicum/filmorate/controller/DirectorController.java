@@ -1,26 +1,21 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 
-import java.net.DatagramSocket;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping ("directors")
 @Slf4j
 public class DirectorController {
-    private DirectorService directorService;
-
-    @Autowired
-    public DirectorController(DirectorService directorService) {
-        this.directorService = directorService;
-    }
+    private final DirectorService directorService;
 
    @GetMapping
    public ResponseEntity<List<Director>> getAll () {

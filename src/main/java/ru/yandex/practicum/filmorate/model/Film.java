@@ -36,7 +36,7 @@ public class Film {
         this.duration = duration;
     }
 
-    public void addLIke(Integer userId){
+    public void addLike(Integer userId){
         likes.add(userId);
     }
 
@@ -44,8 +44,8 @@ public class Film {
         if (likes.contains(userId)){
             likes.remove(userId);
         } else {
-            throw new NotFoundObjectException("Лайк от пользователя "+userId+" этому фильму и так не был поставлен, " +
-                    "удалять нечего");
+            throw new NotFoundObjectException("Лайк от пользователя " + userId +
+                    " этому фильму и так не был поставлен, удалять нечего");
         }
     }
 

@@ -3,22 +3,23 @@ package ru.yandex.practicum.filmorate.dao;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.mappers.FilmMapper;
 import ru.yandex.practicum.filmorate.dao.mappers.UserMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundObjectException;
-import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.enums.EventTypes;
-import ru.yandex.practicum.filmorate.model.enums.OperationTypes;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -26,20 +27,14 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserDbStorage implements UserStorage {
 
-    private static int userId = 0;
     private final JdbcTemplate jdbcTemplate;
-    private final EventDbStorage eventDbStorage;
     private final FilmMapper filmMapper;
     private final UserMapper userMapper;
 
-    private int generateUserId() {
-        return ++userId;
-    }
 
     @Override
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users";
-        log.info("Список всех пользователей отправлен");
         return jdbcTemplate.query(sql, userMapper);
     }
 
@@ -47,7 +42,6 @@ public class UserDbStorage implements UserStorage {
     public User getUserById(int id) {
         if(checkUserInDb(id)){
             String sql = "SELECT * FROM users WHERE userId="+id;
-            log.info("Пользоветель с id " + id + " отправлен");
             return jdbcTemplate.query(sql, this::makeUser);
         }else{
             return null;
@@ -56,18 +50,21 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User createUser(User user) {
-        user.setId(generateUserId());
-        if ((user.getName()==null)||(user.getName().isBlank())) {
-            log.info("Поле \"Имя\" пустое, ему будет присвоено значение поля \"Логин\"");
-            user.setName(user.getLogin());
-        }
-        jdbcTemplate.update("INSERT INTO users(userId, email, login, name, birthdate) VALUES (?,?,?,?,?)",
-                user.getId(),
-                user.getEmail(),
-                user.getLogin(),
-                user.getName(),
-                user.getBirthday());
-        log.info("Пользователь с id " + user.getId() + " сохранен");
+        String sql = "INSERT INTO users (NAME, EMAIL, LOGIN, BIRTHDATE) VALUES (?, ?, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql,
+                    new String[]{"userid"});
+            ps.setString(1, user.getName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getLogin());
+            ps.setDate(4, java.sql.Date.valueOf(user.getBirthday()));
+            return ps;
+        }, keyHolder);
+        int generatedId = Objects.requireNonNull(keyHolder.getKey()).intValue();
+        user.setId(generatedId);
         return user;
     }
 
@@ -81,7 +78,6 @@ public class UserDbStorage implements UserStorage {
                     user.getBirthday(),
                     user.getId());
         }
-        log.info("Пользователь с id " + user.getId() + " изменен");
         return user;
     }
 
@@ -117,29 +113,25 @@ public class UserDbStorage implements UserStorage {
                 jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='apply'",
                                 Integer.class), friendId, userId);
-                eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.UPDATE, friendId);
-                log.info("Дружба медлу пользователями " + friendId + " и " + friendId + " сохранена");
-            }else{
+            } else {
                 jdbcTemplate.update("INSERT INTO friendship VALUES (?,?,?)", userId, friendId,
                         jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
                                 Integer.class));
-                eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.ADD, friendId);
-                log.info("Дружба медлу пользователями " + friendId + " и " + friendId + " сохранена");
             }
         }
     }
 
     @Override
     public User deleteFriend(int userId, int friendId) {
-        eventDbStorage.saveEvent(userId, EventTypes.FRIEND, OperationTypes.REMOVE, friendId);
         jdbcTemplate.update("DELETE FROM friendship WHERE userId=? AND friendId=?", userId, friendId);
         List<Integer> friends = new ArrayList<>();
         SqlRowSet checkFriends = jdbcTemplate.queryForRowSet("SELECT friendId FROM friendship " +
                 "WHERE userId=?", userId);
-        log.info("Дружба медлу пользователями " + friendId + " и " + friendId + " удалена");
+
         while(checkFriends.next()){
             friends.add(checkFriends.getInt("friendId"));
         }
+
         if(friends.contains(userId)){
             jdbcTemplate.update("UPDATE friendship SET friendshipStatusId=? WHERE userId=? AND friendId=?",
                     jdbcTemplate.queryForObject("SELECT friendshipStatusId FROM friendshipStatus WHERE description='not apply'",
@@ -157,13 +149,11 @@ public class UserDbStorage implements UserStorage {
             while (getFriends.next()){
                 userFriends.add(getUserById(getFriends.getInt("friendId")));
             }
-            log.info("Список друзей пользователя " + id + " отрпавлен");
             return userFriends;
         } else {
             return null;
         }
     }
-
 
     @Override
     public List<User> getCommonFriends(int userId, int otherId) {
@@ -174,7 +164,6 @@ public class UserDbStorage implements UserStorage {
             while (getFriends.next()){
                 userFriends.add(getUserById(getFriends.getInt("friendId")));
             }
-            log.info("Список общих друзей между пользователями " + userId + " и " + otherId + "отрпавлен");
             return userFriends;
         } else {
             return null;
@@ -194,14 +183,14 @@ public class UserDbStorage implements UserStorage {
                 "AND FILMID NOT IN " +
                 "    (SELECT FILMID as userfilmlist from LIKESLIST where USERID = " + id +")) as Lr " +
                 "ON f.FILMID = recommended";
-        log.info("Список рекомендуемых фильмов для пользователя " + id + " отправлен");
+
         return jdbcTemplate.query(sql, filmMapper);
     }
+
     private boolean checkUserInDb(Integer id) {
         String sql = "SELECT userId FROM users where USERID =?";
         SqlRowSet getUsersFromDb = jdbcTemplate.queryForRowSet(sql, id);
         if (!getUsersFromDb.next()) {
-            log.warn("Пользователя с id" + id + " нет в базе!");
             throw new NotFoundObjectException("Пользователя с id" + id + " нет в базе!");
         }
         return true;
@@ -223,9 +212,5 @@ public class UserDbStorage implements UserStorage {
         } else {
             return null;
         }
-    }
-    @Override
-    public List<Event>  getEvents(int id) {
-        return eventDbStorage.getEvent(id);
     }
 }
