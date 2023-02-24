@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS directors (
      directorName varchar
 );
 CREATE TABLE IF NOT EXISTS films (
-    filmId INTEGER PRIMARY KEY,
+    filmId INTEGER PRIMARY KEY AUTO_INCREMENT ,
     name varchar(200),
     description varchar,
     release_date date,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS films (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    userId INTEGER PRIMARY KEY,
+    userId INTEGER PRIMARY KEY AUTO_INCREMENT ,
     email varchar,
     login varchar,
     name varchar,

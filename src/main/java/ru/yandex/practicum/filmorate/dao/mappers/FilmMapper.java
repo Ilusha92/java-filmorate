@@ -1,16 +1,14 @@
 package ru.yandex.practicum.filmorate.dao.mappers;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.service.MpaService;
+import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,7 +20,8 @@ import java.util.List;
 public class FilmMapper implements ResultSetExtractor<List<Film>> {
 
     private final JdbcTemplate jdbcTemplate;
-    private final FilmStorage filmStorage;
+    private final GenreStorage genreStorage;
+    private final MpaService mpaService;
 
     public List<Film> extractData(ResultSet rs) throws SQLException, DataAccessException {
         List<Film> films = new ArrayList<>();
@@ -32,16 +31,18 @@ public class FilmMapper implements ResultSetExtractor<List<Film>> {
                     rs.getDate("release_date").toLocalDate(),
                     rs.getInt("duration"));
             film.setId(rs.getInt("filmId"));
-            film.setMpa(filmStorage.getMpaById(rs.getInt("mpaId")));
+            film.setMpa(mpaService.getMpaById(rs.getInt("mpaId")));
             SqlRowSet getFilmGenres = jdbcTemplate.queryForRowSet("SELECT genreId FROM film_genre WHERE filmId = ?", film.getId());
-            while(getFilmGenres.next()){
-                Genre genre = filmStorage.getGenreById(getFilmGenres.getInt("genreId"));
-                film.addGenre(genre);
-            }
+//            while(getFilmGenres.next()){
+//                Genre genre = genreStorage.getGenreById(getFilmGenres.getInt("genreId"));
+//                film.addGenre(genre);
+//            }
+            film.setGenres(genreStorage.getGenresByFilmId(film.getId()));
+
             SqlRowSet getFilmLikes = jdbcTemplate.queryForRowSet("SELECT userId FROM likesList WHERE filmId = ?",
                     film.getId());
             while(getFilmLikes.next()){
-                film.addLIke(getFilmLikes.getInt("userId"));
+                film.addLike(getFilmLikes.getInt("userId"));
             }
             films.add(film);
         }

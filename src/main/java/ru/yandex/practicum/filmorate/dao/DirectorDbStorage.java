@@ -23,7 +23,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class DirectorDbStorage implements DirectorStorage {
     private final JdbcTemplate jdbcTemplate;
-    private final FilmDbStorage filmDbStorage;
+    private final FilmMapper filmMapper;
 
     @Override
     public List<Director> findAll() {
@@ -103,7 +103,7 @@ public class DirectorDbStorage implements DirectorStorage {
            throw new NotFoundObjectException("Director with " + directorId + " not found");
        }
         String statement = "SELECT directorId,films.* FROM directorFilm LEFT JOIN films ON directorFilm.filmId = films.filmId WHERE directorId = ?";
-        List<Film> films = jdbcTemplate.query(statement, new FilmMapper(jdbcTemplate, filmDbStorage), directorId);
+        List<Film> films = jdbcTemplate.query(statement, filmMapper, directorId);
         if (films != null) {
             films.forEach(film -> film.setDirectors(new HashSet<>(findDirectorsByFilmId(film.getId()))));
         }
