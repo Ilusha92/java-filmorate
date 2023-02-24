@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 public class EventDbStorage {
     private final JdbcTemplate jdbcTemplate;
 
-
     public void saveEvent(long userId, EventTypes eventType, OperationTypes operation, long entityId) {
         Timestamp timestamp = Timestamp.valueOf(LocalDateTime.now());
         jdbcTemplate.update("INSERT INTO events(TIMESTAMP, USERID, EVENTTYPE, OPERATION, ENTITYID) VALUES (?,?,?,?,?)",

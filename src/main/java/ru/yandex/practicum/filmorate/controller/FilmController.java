@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.service.DirectorService;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.util.Collection;
 import java.util.List;
 
@@ -81,8 +82,8 @@ public class FilmController {
     }
 
     @GetMapping("/search")
-    public List<Film> searchFilms(@RequestParam String query,
-                                  @RequestParam List<String> by) {
+    public List<Film> searchFilms(@RequestParam @NotBlank String query,
+                                  @RequestParam @NotBlank List<String> by) {
         return filmService.searchFilms(query, by);
     }
 }
