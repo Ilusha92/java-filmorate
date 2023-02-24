@@ -82,17 +82,10 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User deleteUserById(int userId) {
-        Optional<User> userOptional = Optional.of(getUserById(userId));
-        if(userOptional.isPresent()) {
-            jdbcTemplate.update("DELETE FROM friendship where userId = ?", userId);
-            jdbcTemplate.update("DELETE FROM friendship where friendId = ?", userId);
-            jdbcTemplate.update("DELETE FROM likesList where userId = ?", userId);
+    public void deleteUserById(int userId) {
+        if(checkUserInDb(userId)) {
             jdbcTemplate.update("DELETE FROM users where userId = ?", userId);
-            log.info("Пользователь с userId " + userId + " был удален.");
-            return userOptional.get();
         } else {
-            log.info("Пользователь с userId " + userId + " не был удален.");
             throw new NotFoundObjectException("Пользователь с userId " + userId + " не был удален.");
         }
     }

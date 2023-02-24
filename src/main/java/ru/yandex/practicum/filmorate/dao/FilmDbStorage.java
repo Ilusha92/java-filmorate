@@ -33,7 +33,6 @@ public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private static final LocalDate FILM_START_DATE = LocalDate.of(1895, 12, 28);
     private final FilmMapper filmMapper;
-    private final MpaService mpaService;
 
     @Override
     public List<Film> getAllFilms() {
@@ -53,7 +52,6 @@ public class FilmDbStorage implements FilmStorage {
                 "WHERE A.FILMID = B.FILMID AND A.USERID <> B.USERID) as common " +
                 "ON f.FILMID = common.FI " +
                 "WHERE (AU = " + userId + " AND BU = " + friendId + ")";
-
         return jdbcTemplate.query(sql, filmMapper);
     }
 
@@ -156,13 +154,8 @@ public class FilmDbStorage implements FilmStorage {
     @Override
     public void deleteFilmById(int filmId) {
         if(checkFilmInDb(filmId)) {
-            jdbcTemplate.update("DELETE FROM film_genre where filmId = ?", filmId);
-            jdbcTemplate.update("DELETE FROM likesList where filmId = ?", filmId);
             jdbcTemplate.update("DELETE FROM films where filmId = ?", filmId);
-            log.info("Фильм с filmId " + filmId + " был удален.");
-            jdbcTemplate.update("DELETE FROM directorFilm WHERE filmId = ?", filmId);
         } else {
-            log.info("Фильм с filmId " + filmId + " не был удален.");
             throw new NotFoundObjectException("Фильм с filmId " + filmId + " не был удален.");
         }
     }
@@ -223,51 +216,39 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private List<Director> getDirectorByFilmId (Integer filmId) {
-        String statement = "SELECT directorFilm.filmId, directors.directorId, directors.directorName " +
-                "FROM directorFilm LEFT JOIN directors " +
-                "ON directorFilm.directorId = directors.directorId WHERE directorFilm.filmId = ?";
+        String statement = "SELECT df.filmId, d.directorId, d.directorName " +
+                "FROM directorFilm AS df LEFT JOIN directors AS d " +
+                "ON df.directorId = d.directorId WHERE df.filmId = ?";
         return jdbcTemplate.query(statement, new DirectorMapper(), filmId);
     }
 
     public List<Film> searchFilms(String query1, List<String> by) {
-        List<Film> films1 = new ArrayList<>();
+        List<Film> searchResultFilms = new ArrayList<>();
         if (by.size() == 1) {
             if (by.get(0).equalsIgnoreCase("title")) {
-                searchByTitle(query1, films1);
-                }
+                searchResultFilms.addAll(Objects.requireNonNull(jdbcTemplate.query(
+                        "SELECT * FROM films WHERE lower(name) LIKE ?", filmMapper, "%" + query1.toLowerCase() + "%")));
+            }
             if (by.get(0).equalsIgnoreCase("director")) {
-                searchByDirector(query1, films1);
+                searchByDirector(query1,searchResultFilms);
             }
         }
         if (by.size() == 2) {
-            searchByTitle(query1, films1);
-            searchByDirector(query1, films1);
+            searchResultFilms.addAll(Objects.requireNonNull(jdbcTemplate.query(
+                    "SELECT * FROM films WHERE lower(name) LIKE ?", filmMapper, "%" + query1.toLowerCase() + "%")));
+            searchByDirector(query1,searchResultFilms);
         }
-        return films1;
+        return searchResultFilms;
     }
 
-    private void searchByTitle(String query1, List<Film> films1) {
-        SqlRowSet searchByTitle = jdbcTemplate.queryForRowSet("SELECT * FROM films WHERE lower(name) LIKE lower(CONCAT('%',?,'%'))", query1);
-        while (searchByTitle.next()) {
-            Film film = new Film(searchByTitle.getString("name"),
-                    searchByTitle.getString("description"),
-                    searchByTitle.getDate("release_date").toLocalDate(),
-                    searchByTitle.getInt("duration"));
-            film.setId(searchByTitle.getInt("filmId"));
-            film.setMpa(mpaService.getMpaById(searchByTitle.getInt("mpaId")));
-            //необходимо извабивиться от использования данного сервиса именно здесь
-            films1.add(film);
-        }
-    }
-
-    private void searchByDirector(String query1, List<Film> films1) {
+    private void searchByDirector(String query1, List<Film> searchResultFilms) {
         SqlRowSet searchByDirector = jdbcTemplate.queryForRowSet(
                 "SELECT df.* FROM directorFilm as df " +
                         "INNER JOIN directors as d ON df.directorId = d.directorId " +
                         "WHERE lower(d.directorName) LIKE lower(CONCAT('%',?,'%'))", query1);
         while (searchByDirector.next()) {
             Integer filmId1 = searchByDirector.getInt("filmId");
-            films1.add(getFilmById(filmId1));
+            searchResultFilms.add(getFilmById(filmId1));
         }
     }
 }

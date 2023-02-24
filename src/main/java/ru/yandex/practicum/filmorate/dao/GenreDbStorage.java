@@ -35,7 +35,6 @@ public class GenreDbStorage implements GenreStorage {
         if (genreRows.next()) {
             Genre genre = new Genre(genreRows.getInt("genreId"),
                     genreRows.getString("name"));
-            log.info("Жанр с id={}, это {}.", genre.getId(), genre.getName());
             return genre;
         } else {
             throw new GenreNotFoundException("Жанра с таким id нет в базе!");

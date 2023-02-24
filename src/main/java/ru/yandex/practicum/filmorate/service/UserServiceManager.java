@@ -48,8 +48,8 @@ public class UserServiceManager implements UserService{
     }
 
     @Override
-    public User deleteUserById(int id) {
-        return userStorage.deleteUserById(id);
+    public void deleteUserById(int id) {
+        userStorage.deleteUserById(id);
     }
 
     @Override

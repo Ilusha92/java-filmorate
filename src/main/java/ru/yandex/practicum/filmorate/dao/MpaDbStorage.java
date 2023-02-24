@@ -38,10 +38,8 @@ public class MpaDbStorage implements MpaStorage {
         SqlRowSet mpaRows = jdbcTemplate.queryForRowSet("SELECT * FROM mpa WHERE mpaId = ?", id);
         if (mpaRows.next()) {
             Mpa mpa = new Mpa(mpaRows.getInt("mpaId"), mpaRows.getString("name"));
-            log.info("Рейтинг с id={}, это {}.", mpa.getId(), mpa.getName());
             return mpa;
         } else {
-            log.info("Рейтинга с таким id нет!");
             return null;
         }
     }

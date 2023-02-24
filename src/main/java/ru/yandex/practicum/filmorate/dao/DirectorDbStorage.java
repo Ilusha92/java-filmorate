@@ -32,7 +32,6 @@ public class DirectorDbStorage implements DirectorStorage {
         String statement = "SELECT * FROM directors";
         List<Director> directors = jdbcTemplate.query(statement, new DirectorMapper());
         directors.forEach(director -> director.setFilms(new HashSet<>(findFilmsByDirectorId(director.getId()))));
-        log.info("Список директоров отправлен");
         return directors;
     }
 
@@ -97,10 +96,8 @@ public class DirectorDbStorage implements DirectorStorage {
     @Override
     public Director delete(Integer id) {
         Director director = findById(id);
-        jdbcTemplate.update("DELETE FROM directorFilm WHERE directorID = ?", id);
         String statement = "DELETE FROM directors WHERE directorID = ?";
         jdbcTemplate.update(statement, id);
-        deleteDirectorFromDirectorFilm(id);
         return director;
     }
 
@@ -115,11 +112,6 @@ public class DirectorDbStorage implements DirectorStorage {
             films.forEach(film -> film.setDirectors(new HashSet<>(findDirectorsByFilmId(film.getId()))));
         }
         return films;
-    }
-
-    public void deleteDirectorFromDirectorFilm (Integer id) {
-        String statement = "DELETE FROM directorFilm WHERE directorId = ?";
-        jdbcTemplate.update(statement,id);
     }
 
     private void updateFilmsForDirector (Integer directorId, Set<Film> films) {
@@ -143,7 +135,8 @@ public class DirectorDbStorage implements DirectorStorage {
     }
 
     private List<Director> findDirectorsByFilmId (Integer filmId) {
-        String statement = "SELECT directorFilm.filmId, directors.directorId, directors.directorName FROM directorFilm LEFT JOIN directors ON directorFilm.directorId = directors.directorId WHERE directorFilm.filmId = ?";
+        String statement = "SELECT df.filmId, d.directorId, d.directorName FROM directorFilm AS dF " +
+                "LEFT JOIN directors AS d ON df.directorId = d.directorId WHERE df.filmId = ?";
         return jdbcTemplate.query(statement, new DirectorMapper(), filmId);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.service.MpaService;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
@@ -33,10 +34,10 @@ public class FilmMapper implements ResultSetExtractor<List<Film>> {
             film.setId(rs.getInt("filmId"));
             film.setMpa(mpaService.getMpaById(rs.getInt("mpaId")));
             SqlRowSet getFilmGenres = jdbcTemplate.queryForRowSet("SELECT genreId FROM film_genre WHERE filmId = ?", film.getId());
-//            while(getFilmGenres.next()){
-//                Genre genre = genreStorage.getGenreById(getFilmGenres.getInt("genreId"));
-//                film.addGenre(genre);
-//            }
+            while(getFilmGenres.next()){
+                Genre genre = genreStorage.getGenreById(getFilmGenres.getInt("genreId"));
+                film.addGenre(genre);
+            }
             film.setGenres(genreStorage.getGenresByFilmId(film.getId()));
 
             SqlRowSet getFilmLikes = jdbcTemplate.queryForRowSet("SELECT userId FROM likesList WHERE filmId = ?",

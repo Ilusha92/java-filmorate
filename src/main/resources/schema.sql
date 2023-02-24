@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS friendshipStatus (
     description varchar
 );
 
-
 CREATE TABLE IF NOT EXISTS directors (
      directorId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
      directorName varchar
@@ -42,8 +41,6 @@ CREATE TABLE IF NOT EXISTS film_genre (
     genreId int REFERENCES GENRE(genreId) ON DELETE CASCADE ,
     PRIMARY KEY (filmId, genreId)
 );
-
-
 
 CREATE TABLE IF NOT EXISTS likesList (
     filmId int REFERENCES FILMS(filmId) ON DELETE CASCADE ,
@@ -73,15 +70,13 @@ CREATE TABLE IF NOT EXISTS review_likes (
     PRIMARY KEY (user_id, review_id)
 );
 
-
-
-     CREATE TABLE IF NOT EXISTS directorFilm (
+CREATE TABLE IF NOT EXISTS directorFilm (
      directorFilmId int NOT NULL AUTO_INCREMENT PRIMARY KEY,
      filmId int REFERENCES FILMS(filmId) ON DELETE CASCADE ,
      directorId int REFERENCES DIRECTORS(DIRECTORID) ON DELETE CASCADE,
      CONSTRAINT filmDirectorFilm FOREIGN KEY (filmId) REFERENCES films (filmId),
      CONSTRAINT directorFilmDirector FOREIGN KEY (directorId) REFERENCES directors (directorId)
-     );
+);
 
 CREATE TABLE IF NOT EXISTS events (
     timestamp long,

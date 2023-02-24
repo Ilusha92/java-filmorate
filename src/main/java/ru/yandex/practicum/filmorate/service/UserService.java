@@ -12,7 +12,7 @@ public interface UserService {
     User getById(int id);
     User createUser(User user);
     User updateUser(User user);
-    User deleteUserById(int id);
+    void deleteUserById(int id);
     void addFriend(int userId, int friendId);
     User deleteFriend(int userId, int friendId);
     List<User> getFriends(int id);
